@@ -1,2 +1,15 @@
 __pycache__/
 *.pyc
+*.bak
+*.log
+.DS_Store
+*~
+*.swp
+*.swo
+endpoint_report.json
+diagnostic_report.json
+.venv/
+venv/
+.env
+.vscode/
+.idea/
