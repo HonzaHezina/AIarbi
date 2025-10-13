@@ -208,6 +208,40 @@ Systém je ve výborném stavu. Všechny obchodní strategie jsou správně impl
 
 **Systém je připraven k použití!**
 
+### Návrhy pro další rozvoj
+
+#### Vysoká priorita (rychlé výhry)
+1. **Real-time WebSocket feeds**: Nahradit 30-sekundové polling WebSocket připojením pro Binance, Kraken, Coinbase
+   - Redukce latence na <100ms
+   - Soubor: `core/data_engine.py`
+
+2. **Backtesting modul**: Historické testování výkonu
+   - Sharpe ratio, max drawdown metriky
+   - Monte Carlo simulace
+   - Nový modul: `core/backtesting.py`
+
+3. **Databázová persistence**: SQLite/PostgreSQL pro ukládání výsledků
+   - Historie skenů a exekucí
+   - Performance tracking přes čas
+   - Nový modul: `core/database.py`
+
+4. **Rozšířené monitoring**: Sentry, Prometheus, health checks
+   - Nový modul: `utils/monitoring.py`
+
+#### Střední priorita (rozšíření funkcí)
+5. **Více DEX protokolů**: Curve Finance, Balancer V2, 1inch Aggregator
+6. **Smart order routing**: Optimalizace cest, minimalizace slippage
+7. **Portfolio management**: Kelly criterion, risk parity, stop-loss automation
+8. **Multi-chain podpora**: Polygon, Avalanche, Arbitrum, Layer 2
+
+#### Nižší priorita (UI/UX)
+9. **Vylepšené dashboardy**: Real-time grafy, customizovatelné alerts
+10. **REST API**: Programatický přístup k systému
+11. **ML vylepšení**: Fine-tuning na crypto data, reinforcement learning
+12. **Multi-language UI**: Lokalizace do více jazyků
+
+Pro kompletní seznam doporučení viz [README.md](README.md) a [README.cs.md](README.cs.md).
+
 ---
 
 *Poznámka: Pro detailnější technickou dokumentaci viz `STRATEGY_VERIFICATION_REPORT.md` (v angličtině).*
