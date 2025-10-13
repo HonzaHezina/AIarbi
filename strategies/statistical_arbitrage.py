@@ -26,6 +26,28 @@ class StatisticalArbitrage:
         self.lookback_periods = 100  # Number of data points to analyze
         self.correlation_threshold = 0.7  # Minimum correlation to consider
         self.deviation_threshold = 2.0  # Standard deviations for anomaly
+    
+    def get_strategy_info(self) -> Dict[str, Any]:
+        """Get detailed strategy information for UI display"""
+        return {
+            'name': 'Statistical Arbitrage (AI-Powered)',
+            'key': 'statistical',
+            'description': 'Uses AI and historical data to detect price correlation anomalies and predict mean reversion',
+            'how_it_works': 'Analyzes price movements across correlated pairs. When prices deviate significantly from historical correlation, it predicts they will converge. Example: If ETH/BTC ratio diverges 2σ from mean, trade on expected convergence.',
+            'supported_exchanges': {
+                'All': 'Analyzes all available exchanges'
+            },
+            'typical_profit': '0.3% - 1.5%',
+            'execution_speed': 'Variable (minutes to hours)',
+            'risk_level': 'Medium-High',
+            'capital_required': '$2,000 - $100,000',
+            'fees': {
+                'Trading': '0.1% per exchange',
+            },
+            'best_conditions': 'Mean-reverting markets, sufficient historical data',
+            'ai_features': 'Correlation analysis, anomaly detection, mean reversion prediction',
+            'status': 'Active ✅ (AI-Enhanced)'
+        }
 
     async def add_strategy_edges(self, graph, price_data: Dict[str, Any]):
         """Add statistical arbitrage signals as edge weight modifications"""

@@ -24,6 +24,26 @@ class WrappedTokensArbitrage:
 
         # Reverse mapping
         self.native_pairs = {v: k for k, v in self.wrapped_pairs.items()}
+    
+    def get_strategy_info(self) -> Dict[str, Any]:
+        """Get detailed strategy information for UI display"""
+        return {
+            'name': 'Wrapped Tokens Arbitrage',
+            'key': 'wrapped_tokens',
+            'description': 'Exploits price differences between native tokens and their wrapped versions',
+            'how_it_works': 'Wrapped tokens should have 1:1 value with native tokens, but market inefficiencies create opportunities. Example: Buy wBTC at discount, unwrap to BTC, sell for profit.',
+            'supported_pairs': list(self.wrapped_pairs.items()),
+            'typical_profit': '0.05% - 0.5%',
+            'execution_speed': 'Medium (5-15 seconds)',
+            'risk_level': 'Very Low',
+            'capital_required': '$1,000 - $50,000',
+            'fees': {
+                'Wrap/Unwrap': 'Gas fees only ($5-30)',
+                'Trading': '0.1%',
+            },
+            'best_conditions': 'Network congestion, liquidity imbalances',
+            'status': 'Active ✅'
+        }
 
     async def add_strategy_edges(self, graph, price_data: Dict[str, Any]):
         """Add wrapped token arbitrage edges to the graph"""

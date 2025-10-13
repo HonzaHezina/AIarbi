@@ -18,6 +18,27 @@ class TriangularArbitrage:
 
         # Common trading currencies for triangular arbitrage
         self.major_currencies = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB']
+    
+    def get_strategy_info(self) -> Dict[str, Any]:
+        """Get detailed strategy information for UI display"""
+        return {
+            'name': 'Triangular Arbitrage',
+            'key': 'triangular',
+            'description': 'Exploits price inefficiencies between three currency pairs on the same exchange',
+            'how_it_works': 'Creates a loop of 3 trades that results in profit. Example: USDT → BTC → ETH → USDT, exploiting the cross-rate differences.',
+            'supported_exchanges': {
+                'All': 'Any CEX or DEX with sufficient trading pairs'
+            },
+            'typical_profit': '0.1% - 0.8%',
+            'execution_speed': 'Fast (1-5 seconds)',
+            'risk_level': 'Low',
+            'capital_required': '$500 - $20,000',
+            'fees': {
+                'Trading': '0.1% per trade (3 trades total)',
+            },
+            'best_conditions': 'High trading volume, active market',
+            'status': 'Active ✅'
+        }
 
     async def add_strategy_edges(self, graph, price_data: Dict[str, Any]):
         """Add triangular arbitrage edges to the graph"""
