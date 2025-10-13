@@ -1,0 +1,95 @@
+{
+  "timestamp": 1757764128.5645962,
+  "results": [
+    {
+      "exchange": "binance",
+      "base_url": "https://api.binance.com",
+      "checked_url": "https://api.binance.com/api/v3/ticker/price",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 792.3,
+      "error": null
+    },
+    {
+      "exchange": "coinbase",
+      "base_url": "https://api.coinbase.com",
+      "checked_url": "https://api.coinbase.com/v2/prices/BTC-USD/spot",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 548.1,
+      "error": null
+    },
+    {
+      "exchange": "kraken",
+      "base_url": "https://api.kraken.com",
+      "checked_url": "https://api.kraken.com/0/public/Ticker",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 607.7,
+      "error": null
+    },
+    {
+      "exchange": "kucoin",
+      "base_url": "https://api.kucoin.com",
+      "checked_url": "https://api.kucoin.com/api/v1/market/orderbook/level1",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 771.54,
+      "error": null
+    },
+    {
+      "exchange": "bybit",
+      "base_url": "https://api.bybit.com",
+      "checked_url": "https://api.bybit.com/v5/market/tickers?category=spot&symbol=BTCUSDT",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1047.35,
+      "error": null
+    },
+    {
+      "exchange": "okx",
+      "base_url": "https://www.okx.com",
+      "checked_url": "https://www.okx.com/api/v5/market/ticker?instId=BTC-USDT",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 698.58,
+      "error": null
+    },
+    {
+      "exchange": "bitfinex",
+      "base_url": "https://api-pub.bitfinex.com",
+      "checked_url": "https://api-pub.bitfinex.com/v2/ticker/tBTCUSDT",
+      "ok": false,
+      "status_code": null,
+      "latency_ms": 0.01,
+      "error": "prefer_ccxt"
+    },
+    {
+      "exchange": "gateio",
+      "base_url": "https://api.gateio.ws",
+      "checked_url": "https://api.gateio.ws/api/v4/spot/tickers",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1564.79,
+      "error": null
+    },
+    {
+      "exchange": "coingecko",
+      "base_url": "https://api.coingecko.com/api/v3",
+      "checked_url": "https://api.coingecko.com/api/simple/price",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 513.24,
+      "error": null
+    },
+    {
+      "exchange": "coinmarketcap",
+      "base_url": "https://pro-api.coinmarketcap.com/v1",
+      "checked_url": "https://pro-api.coinmarketcap.com/cryptocurrency/quotes/latest",
+      "ok": false,
+      "status_code": null,
+      "latency_ms": 0.01,
+      "error": "requires_api_key_missing"
+    }
+  ]
+}

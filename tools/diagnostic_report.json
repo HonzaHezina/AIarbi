@@ -1,0 +1,1372 @@
+{
+  "metadata": {
+    "pairs": [
+      "BTC/USDT",
+      "ETH/USDT",
+      "BNB/USDT",
+      "ADA/USDT",
+      "SOL/USDT",
+      "MATIC/USDT",
+      "DOT/USDT",
+      "LINK/USDT"
+    ]
+  },
+  "exchanges": {
+    "binance": {
+      "has_symbols": false,
+      "symbols_sample": []
+    },
+    "kraken": {
+      "has_symbols": false,
+      "symbols_sample": []
+    },
+    "coinbase": {
+      "has_symbols": false,
+      "symbols_sample": []
+    },
+    "kucoin": {
+      "has_symbols": false,
+      "symbols_sample": []
+    },
+    "bybit": {
+      "has_symbols": false,
+      "symbols_sample": []
+    },
+    "okx": {
+      "has_symbols": false,
+      "symbols_sample": []
+    },
+    "bitfinex": {
+      "has_symbols": false,
+      "symbols_sample": []
+    },
+    "gateio": {
+      "has_symbols": false,
+      "symbols_sample": []
+    }
+  },
+  "anomalies": [
+    {
+      "token": "SOL",
+      "direction": "cex_to_dex",
+      "buy_exchange": "binance",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 190.70192006026986,
+      "profit_usd": 1951.8341518168618,
+      "buy_price_info": {
+        "bid": 99.79440881047384,
+        "ask": 99.89425314144981,
+        "last": 99.84433097596182,
+        "volume": 681.8765070090427,
+        "timestamp": 1757780654347
+      },
+      "sell_price_info": {
+        "bid": 300.3675061561455,
+        "ask": 301.26996235891806,
+        "last": 300.8187342575318,
+        "volume": 269.7302614474337,
+        "timestamp": 1757780654779,
+        "fee": 0.003,
+        "liquidity": 44106.68538119611
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "SOL",
+      "direction": "cex_to_dex",
+      "buy_exchange": "binance",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 191.82957670115317,
+      "profit_usd": 1954.7433865847506,
+      "buy_price_info": {
+        "bid": 99.79440881047384,
+        "ask": 99.89425314144981,
+        "last": 99.84433097596182,
+        "volume": 681.8765070090427,
+        "timestamp": 1757780654347
+      },
+      "sell_price_info": {
+        "bid": 299.757242922523,
+        "ask": 300.65786558528475,
+        "last": 300.2075542539039,
+        "volume": 152.22473318536453,
+        "timestamp": 1757780655661,
+        "fee": 0.003,
+        "liquidity": 74784.57822563514
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "SOL",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kraken",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 190.00173874830855,
+      "profit_usd": 1944.6677960889378,
+      "buy_price_info": {
+        "bid": 100.03354009550958,
+        "ask": 100.13362367739603,
+        "last": 100.0835818864528,
+        "volume": 284.42225453599343,
+        "timestamp": 1757780654348
+      },
+      "sell_price_info": {
+        "bid": 300.3675061561455,
+        "ask": 301.26996235891806,
+        "last": 300.8187342575318,
+        "volume": 269.7302614474337,
+        "timestamp": 1757780654779,
+        "fee": 0.003,
+        "liquidity": 44106.68538119611
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "SOL",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kraken",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 191.12773217846353,
+      "profit_usd": 1947.591590898543,
+      "buy_price_info": {
+        "bid": 100.03354009550958,
+        "ask": 100.13362367739603,
+        "last": 100.0835818864528,
+        "volume": 284.42225453599343,
+        "timestamp": 1757780654348
+      },
+      "sell_price_info": {
+        "bid": 299.757242922523,
+        "ask": 300.65786558528475,
+        "last": 300.2075542539039,
+        "volume": 152.22473318536453,
+        "timestamp": 1757780655661,
+        "fee": 0.003,
+        "liquidity": 74784.57822563514
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "SOL",
+      "direction": "cex_to_dex",
+      "buy_exchange": "coinbase",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 190.1648784299095,
+      "profit_usd": 1946.3375307301235,
+      "buy_price_info": {
+        "bid": 99.97772103584049,
+        "ask": 100.07774877074377,
+        "last": 100.02773490329213,
+        "volume": 267.64704574398706,
+        "timestamp": 1757780654349
+      },
+      "sell_price_info": {
+        "bid": 300.3675061561455,
+        "ask": 301.26996235891806,
+        "last": 300.8187342575318,
+        "volume": 269.7302614474337,
+        "timestamp": 1757780654779,
+        "fee": 0.003,
+        "liquidity": 44106.68538119611
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "SOL",
+      "direction": "cex_to_dex",
+      "buy_exchange": "coinbase",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 191.29125938207346,
+      "profit_usd": 1949.2579331033285,
+      "buy_price_info": {
+        "bid": 99.97772103584049,
+        "ask": 100.07774877074377,
+        "last": 100.02773490329213,
+        "volume": 267.64704574398706,
+        "timestamp": 1757780654349
+      },
+      "sell_price_info": {
+        "bid": 299.757242922523,
+        "ask": 300.65786558528475,
+        "last": 300.2075542539039,
+        "volume": 152.22473318536453,
+        "timestamp": 1757780655661,
+        "fee": 0.003,
+        "liquidity": 74784.57822563514
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "SOL",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kucoin",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 190.11606494759857,
+      "profit_usd": 1945.837924738671,
+      "buy_price_info": {
+        "bid": 99.9944162812708,
+        "ask": 100.09446071977133,
+        "last": 100.04443850052107,
+        "volume": 929.9638734156482,
+        "timestamp": 1757780654350
+      },
+      "sell_price_info": {
+        "bid": 300.3675061561455,
+        "ask": 301.26996235891806,
+        "last": 300.8187342575318,
+        "volume": 269.7302614474337,
+        "timestamp": 1757780654779,
+        "fee": 0.003,
+        "liquidity": 44106.68538119611
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "SOL",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kucoin",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 191.2423299482138,
+      "profit_usd": 1948.7593421722986,
+      "buy_price_info": {
+        "bid": 99.9944162812708,
+        "ask": 100.09446071977133,
+        "last": 100.04443850052107,
+        "volume": 929.9638734156482,
+        "timestamp": 1757780654350
+      },
+      "sell_price_info": {
+        "bid": 299.757242922523,
+        "ask": 300.65786558528475,
+        "last": 300.2075542539039,
+        "volume": 152.22473318536453,
+        "timestamp": 1757780655661,
+        "fee": 0.003,
+        "liquidity": 74784.57822563514
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "LINK",
+      "direction": "cex_to_dex",
+      "buy_exchange": "binance",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 189.40052559472946,
+      "profit_usd": 1938.5143794620558,
+      "buy_price_info": {
+        "bid": 99.89272100463509,
+        "ask": 99.99266369698591,
+        "last": 99.9426923508105,
+        "volume": 236.88912737105002,
+        "timestamp": 1757780654347
+      },
+      "sell_price_info": {
+        "bid": 299.32752522002806,
+        "ask": 300.22685679304766,
+        "last": 299.77719100653786,
+        "volume": 564.8836840713448,
+        "timestamp": 1757780655104,
+        "fee": 0.003,
+        "liquidity": 96934.70609969842
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "LINK",
+      "direction": "cex_to_dex",
+      "buy_exchange": "binance",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 190.50563574493694,
+      "profit_usd": 1941.2524282409072,
+      "buy_price_info": {
+        "bid": 99.89272100463509,
+        "ask": 99.99266369698591,
+        "last": 99.9426923508105,
+        "volume": 236.88912737105002,
+        "timestamp": 1757780654347
+      },
+      "sell_price_info": {
+        "bid": 298.6994919376376,
+        "ask": 299.59693658041465,
+        "last": 299.14821425902613,
+        "volume": 776.8624983582869,
+        "timestamp": 1757780655988,
+        "fee": 0.003,
+        "liquidity": 90973.43205030271
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "LINK",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kraken",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 189.7396750833867,
+      "profit_usd": 1941.9855744784627,
+      "buy_price_info": {
+        "bid": 99.77667388637312,
+        "ask": 99.87650047355308,
+        "last": 99.8265871799631,
+        "volume": 162.88396762553188,
+        "timestamp": 1757780654348
+      },
+      "sell_price_info": {
+        "bid": 299.32752522002806,
+        "ask": 300.22685679304766,
+        "last": 299.77719100653786,
+        "volume": 564.8836840713448,
+        "timestamp": 1757780655104,
+        "fee": 0.003,
+        "liquidity": 96934.70609969842
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "LINK",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kraken",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 190.84556822162492,
+      "profit_usd": 1944.7163401783578,
+      "buy_price_info": {
+        "bid": 99.77667388637312,
+        "ask": 99.87650047355308,
+        "last": 99.8265871799631,
+        "volume": 162.88396762553188,
+        "timestamp": 1757780654348
+      },
+      "sell_price_info": {
+        "bid": 298.6994919376376,
+        "ask": 299.59693658041465,
+        "last": 299.14821425902613,
+        "volume": 776.8624983582869,
+        "timestamp": 1757780655988,
+        "fee": 0.003,
+        "liquidity": 90973.43205030271
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "LINK",
+      "direction": "cex_to_dex",
+      "buy_exchange": "coinbase",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 189.11129715172683,
+      "profit_usd": 1935.554126347924,
+      "buy_price_info": {
+        "bid": 99.99190006558855,
+        "ask": 100.09194198661466,
+        "last": 100.0419210261016,
+        "volume": 963.5920388372245,
+        "timestamp": 1757780654349
+      },
+      "sell_price_info": {
+        "bid": 299.32752522002806,
+        "ask": 300.22685679304766,
+        "last": 299.77719100653786,
+        "volume": 564.8836840713448,
+        "timestamp": 1757780655104,
+        "fee": 0.003,
+        "liquidity": 96934.70609969842
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "LINK",
+      "direction": "cex_to_dex",
+      "buy_exchange": "coinbase",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 190.21573956568054,
+      "profit_usd": 1938.2983861742846,
+      "buy_price_info": {
+        "bid": 99.99190006558855,
+        "ask": 100.09194198661466,
+        "last": 100.0419210261016,
+        "volume": 963.5920388372245,
+        "timestamp": 1757780654349
+      },
+      "sell_price_info": {
+        "bid": 298.6994919376376,
+        "ask": 299.59693658041465,
+        "last": 299.14821425902613,
+        "volume": 776.8624983582869,
+        "timestamp": 1757780655988,
+        "fee": 0.003,
+        "liquidity": 90973.43205030271
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "LINK",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kucoin",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 189.5973215152503,
+      "profit_usd": 1940.5285857085864,
+      "buy_price_info": {
+        "bid": 99.82535029752273,
+        "ask": 99.92522558546423,
+        "last": 99.87528794149348,
+        "volume": 247.97752132163046,
+        "timestamp": 1757780654350
+      },
+      "sell_price_info": {
+        "bid": 299.32752522002806,
+        "ask": 300.22685679304766,
+        "last": 299.77719100653786,
+        "volume": 564.8836840713448,
+        "timestamp": 1757780655104,
+        "fee": 0.003,
+        "liquidity": 96934.70609969842
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "LINK",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kucoin",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 190.7028860044894,
+      "profit_usd": 1943.2624083857468,
+      "buy_price_info": {
+        "bid": 99.82535029752273,
+        "ask": 99.92522558546423,
+        "last": 99.87528794149348,
+        "volume": 247.97752132163046,
+        "timestamp": 1757780654350
+      },
+      "sell_price_info": {
+        "bid": 298.6994919376376,
+        "ask": 299.59693658041465,
+        "last": 299.14821425902613,
+        "volume": 776.8624983582869,
+        "timestamp": 1757780655988,
+        "fee": 0.003,
+        "liquidity": 90973.43205030271
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "DOT",
+      "direction": "cex_to_dex",
+      "buy_exchange": "binance",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 188.04530238183796,
+      "profit_usd": 1924.6436698781113,
+      "buy_price_info": {
+        "bid": 99.95808492365873,
+        "ask": 100.05809301262687,
+        "last": 100.0080889681428,
+        "volume": 641.903570050841,
+        "timestamp": 1757780654347
+      },
+      "sell_price_info": {
+        "bid": 298.1313346319311,
+        "ask": 299.02707224224235,
+        "last": 298.57920343708673,
+        "volume": 690.2414659535,
+        "timestamp": 1757780654995,
+        "fee": 0.003,
+        "liquidity": 11685.441281357063
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "DOT",
+      "direction": "cex_to_dex",
+      "buy_exchange": "binance",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 190.40682794345707,
+      "profit_usd": 1940.2455767438273,
+      "buy_price_info": {
+        "bid": 99.95808492365873,
+        "ask": 100.05809301262687,
+        "last": 100.0080889681428,
+        "volume": 641.903570050841,
+        "timestamp": 1757780654347
+      },
+      "sell_price_info": {
+        "bid": 298.7938965288524,
+        "ask": 299.6916248108619,
+        "last": 299.24276066985715,
+        "volume": 734.2695411610049,
+        "timestamp": 1757780655877,
+        "fee": 0.003,
+        "liquidity": 19231.886001095492
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "DOT",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kraken",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 187.71365046110668,
+      "profit_usd": 1921.2492124694268,
+      "buy_price_info": {
+        "bid": 100.07243442302035,
+        "ask": 100.17255691869121,
+        "last": 100.12249567085578,
+        "volume": 743.7803815892062,
+        "timestamp": 1757780654348
+      },
+      "sell_price_info": {
+        "bid": 298.1313346319311,
+        "ask": 299.02707224224235,
+        "last": 298.57920343708673,
+        "volume": 690.2414659535,
+        "timestamp": 1757780654995,
+        "fee": 0.003,
+        "liquidity": 11685.441281357063
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "DOT",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kraken",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 190.07297110421877,
+      "profit_usd": 1936.843575551989,
+      "buy_price_info": {
+        "bid": 100.07243442302035,
+        "ask": 100.17255691869121,
+        "last": 100.12249567085578,
+        "volume": 743.7803815892062,
+        "timestamp": 1757780654348
+      },
+      "sell_price_info": {
+        "bid": 298.7938965288524,
+        "ask": 299.6916248108619,
+        "last": 299.24276066985715,
+        "volume": 734.2695411610049,
+        "timestamp": 1757780655877,
+        "fee": 0.003,
+        "liquidity": 19231.886001095492
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "DOT",
+      "direction": "cex_to_dex",
+      "buy_exchange": "coinbase",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 188.29023214513205,
+      "profit_usd": 1927.1505260054264,
+      "buy_price_info": {
+        "bid": 99.87380377627862,
+        "ask": 99.97372754193772,
+        "last": 99.92376565910817,
+        "volume": 556.9635189605633,
+        "timestamp": 1757780654349
+      },
+      "sell_price_info": {
+        "bid": 298.1313346319311,
+        "ask": 299.02707224224235,
+        "last": 298.57920343708673,
+        "volume": 690.2414659535,
+        "timestamp": 1757780654995,
+        "fee": 0.003,
+        "liquidity": 11685.441281357063
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "DOT",
+      "direction": "cex_to_dex",
+      "buy_exchange": "coinbase",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 190.65338607111224,
+      "profit_usd": 1942.7580040646335,
+      "buy_price_info": {
+        "bid": 99.87380377627862,
+        "ask": 99.97372754193772,
+        "last": 99.92376565910817,
+        "volume": 556.9635189605633,
+        "timestamp": 1757780654349
+      },
+      "sell_price_info": {
+        "bid": 298.7938965288524,
+        "ask": 299.6916248108619,
+        "last": 299.24276066985715,
+        "volume": 734.2695411610049,
+        "timestamp": 1757780655877,
+        "fee": 0.003,
+        "liquidity": 19231.886001095492
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "DOT",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kucoin",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 187.98987917274408,
+      "profit_usd": 1924.0764133330354,
+      "buy_price_info": {
+        "bid": 99.97717597385922,
+        "ask": 100.07720316342785,
+        "last": 100.02718956864354,
+        "volume": 928.181314083107,
+        "timestamp": 1757780654350
+      },
+      "sell_price_info": {
+        "bid": 298.1313346319311,
+        "ask": 299.02707224224235,
+        "last": 298.57920343708673,
+        "volume": 690.2414659535,
+        "timestamp": 1757780654995,
+        "fee": 0.003,
+        "liquidity": 11685.441281357063
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "DOT",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kucoin",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 190.35103626473642,
+      "profit_usd": 1939.6770595376638,
+      "buy_price_info": {
+        "bid": 99.97717597385922,
+        "ask": 100.07720316342785,
+        "last": 100.02718956864354,
+        "volume": 928.181314083107,
+        "timestamp": 1757780654350
+      },
+      "sell_price_info": {
+        "bid": 298.7938965288524,
+        "ask": 299.6916248108619,
+        "last": 299.24276066985715,
+        "volume": 734.2695411610049,
+        "timestamp": 1757780655877,
+        "fee": 0.003,
+        "liquidity": 19231.886001095492
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "MATIC",
+      "direction": "cex_to_dex",
+      "buy_exchange": "binance",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 188.9560457024698,
+      "profit_usd": 1933.9651277647781,
+      "buy_price_info": {
+        "bid": 99.88462589265785,
+        "ask": 99.98456048584711,
+        "last": 99.93459318925248,
+        "volume": 583.6880959508198,
+        "timestamp": 1757780654347
+      },
+      "sell_price_info": {
+        "bid": 298.847044696803,
+        "ask": 299.7449326628424,
+        "last": 299.2959886798227,
+        "volume": 356.82390040653416,
+        "timestamp": 1757780654887,
+        "fee": 0.003,
+        "liquidity": 40585.993940497356
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "MATIC",
+      "direction": "cex_to_dex",
+      "buy_exchange": "binance",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 190.17133224850048,
+      "profit_usd": 1937.8458756122195,
+      "buy_price_info": {
+        "bid": 99.88462589265785,
+        "ask": 99.98456048584711,
+        "last": 99.93459318925248,
+        "volume": 583.6880959508198,
+        "timestamp": 1757780654347
+      },
+      "sell_price_info": {
+        "bid": 298.33365836130673,
+        "ask": 299.23000385463064,
+        "last": 298.7818311079687,
+        "volume": 669.7424568827055,
+        "timestamp": 1757780655770,
+        "fee": 0.003,
+        "liquidity": 65936.98439672877
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "MATIC",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kraken",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 189.11050227750732,
+      "profit_usd": 1935.545990810287,
+      "buy_price_info": {
+        "bid": 99.83166547736495,
+        "ask": 99.93154708364547,
+        "last": 99.88160628050521,
+        "volume": 615.0461379726428,
+        "timestamp": 1757780654348
+      },
+      "sell_price_info": {
+        "bid": 298.847044696803,
+        "ask": 299.7449326628424,
+        "last": 299.2959886798227,
+        "volume": 356.82390040653416,
+        "timestamp": 1757780654887,
+        "fee": 0.003,
+        "liquidity": 40585.993940497356
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "MATIC",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kraken",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 190.32620440716258,
+      "profit_usd": 1939.4240229089864,
+      "buy_price_info": {
+        "bid": 99.83166547736495,
+        "ask": 99.93154708364547,
+        "last": 99.88160628050521,
+        "volume": 615.0461379726428,
+        "timestamp": 1757780654348
+      },
+      "sell_price_info": {
+        "bid": 298.33365836130673,
+        "ask": 299.23000385463064,
+        "last": 298.7818311079687,
+        "volume": 669.7424568827055,
+        "timestamp": 1757780655770,
+        "fee": 0.003,
+        "liquidity": 65936.98439672877
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "MATIC",
+      "direction": "cex_to_dex",
+      "buy_exchange": "coinbase",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 189.22734773734518,
+      "profit_usd": 1936.741904091728,
+      "buy_price_info": {
+        "bid": 99.79163854292287,
+        "ask": 99.89148010224545,
+        "last": 99.84155932258416,
+        "volume": 276.24887454825205,
+        "timestamp": 1757780654349
+      },
+      "sell_price_info": {
+        "bid": 298.847044696803,
+        "ask": 299.7449326628424,
+        "last": 299.2959886798227,
+        "volume": 356.82390040653416,
+        "timestamp": 1757780654887,
+        "fee": 0.003,
+        "liquidity": 40585.993940497356
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "MATIC",
+      "direction": "cex_to_dex",
+      "buy_exchange": "coinbase",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 190.4433642534854,
+      "profit_usd": 1940.6178817430164,
+      "buy_price_info": {
+        "bid": 99.79163854292287,
+        "ask": 99.89148010224545,
+        "last": 99.84155932258416,
+        "volume": 276.24887454825205,
+        "timestamp": 1757780654349
+      },
+      "sell_price_info": {
+        "bid": 298.33365836130673,
+        "ask": 299.23000385463064,
+        "last": 298.7818311079687,
+        "volume": 669.7424568827055,
+        "timestamp": 1757780655770,
+        "fee": 0.003,
+        "liquidity": 65936.98439672877
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "MATIC",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kucoin",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 189.07248924837185,
+      "profit_usd": 1935.1569274570857,
+      "buy_price_info": {
+        "bid": 99.844694258966,
+        "ask": 99.94458890054577,
+        "last": 99.89464157975588,
+        "volume": 792.7248299400218,
+        "timestamp": 1757780654350
+      },
+      "sell_price_info": {
+        "bid": 298.847044696803,
+        "ask": 299.7449326628424,
+        "last": 299.2959886798227,
+        "volume": 356.82390040653416,
+        "timestamp": 1757780654887,
+        "fee": 0.003,
+        "liquidity": 40585.993940497356
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "MATIC",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kucoin",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 190.28808909949072,
+      "profit_usd": 1939.0356279238104,
+      "buy_price_info": {
+        "bid": 99.844694258966,
+        "ask": 99.94458890054577,
+        "last": 99.89464157975588,
+        "volume": 792.7248299400218,
+        "timestamp": 1757780654350
+      },
+      "sell_price_info": {
+        "bid": 298.33365836130673,
+        "ask": 299.23000385463064,
+        "last": 298.7818311079687,
+        "volume": 669.7424568827055,
+        "timestamp": 1757780655770,
+        "fee": 0.003,
+        "liquidity": 65936.98439672877
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "ADA",
+      "direction": "cex_to_dex",
+      "buy_exchange": "binance",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 58397.28210717333,
+      "profit_usd": 597696.1823669189,
+      "buy_price_info": {
+        "bid": 0.49982945286042285,
+        "ask": 0.5003295323530296,
+        "last": 0.5000794926067262,
+        "volume": 771.1369183118902,
+        "timestamp": 1757780654347
+      },
+      "sell_price_info": {
+        "bid": 300.4698055202336,
+        "ask": 301.3725690821372,
+        "last": 300.9211873011854,
+        "volume": 811.205880151018,
+        "timestamp": 1757780654676,
+        "fee": 0.003,
+        "liquidity": 90337.69928659216
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "ADA",
+      "direction": "cex_to_dex",
+      "buy_exchange": "binance",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 58568.83233541163,
+      "profit_usd": 596816.4014978444,
+      "buy_price_info": {
+        "bid": 0.49982945286042285,
+        "ask": 0.5003295323530296,
+        "last": 0.5000794926067262,
+        "volume": 771.1369183118902,
+        "timestamp": 1757780654347
+      },
+      "sell_price_info": {
+        "bid": 300.023784139503,
+        "ask": 300.92520762715293,
+        "last": 300.47449588332796,
+        "volume": 993.9097405762669,
+        "timestamp": 1757780655546,
+        "fee": 0.003,
+        "liquidity": 99969.6198840917
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "ADA",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kraken",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 58504.17856811204,
+      "profit_usd": 598790.2676446267,
+      "buy_price_info": {
+        "bid": 0.4989177773328882,
+        "ask": 0.49941694469390163,
+        "last": 0.49916736101339493,
+        "volume": 385.69575430593744,
+        "timestamp": 1757780654348
+      },
+      "sell_price_info": {
+        "bid": 300.4698055202336,
+        "ask": 301.3725690821372,
+        "last": 300.9211873011854,
+        "volume": 811.205880151018,
+        "timestamp": 1757780654676,
+        "fee": 0.003,
+        "liquidity": 90337.69928659216
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "ADA",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kraken",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 58676.041481923035,
+      "profit_usd": 597908.8627007958,
+      "buy_price_info": {
+        "bid": 0.4989177773328882,
+        "ask": 0.49941694469390163,
+        "last": 0.49916736101339493,
+        "volume": 385.69575430593744,
+        "timestamp": 1757780654348
+      },
+      "sell_price_info": {
+        "bid": 300.023784139503,
+        "ask": 300.92520762715293,
+        "last": 300.47449588332796,
+        "volume": 993.9097405762669,
+        "timestamp": 1757780655546,
+        "fee": 0.003,
+        "liquidity": 99969.6198840917
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "ADA",
+      "direction": "cex_to_dex",
+      "buy_exchange": "coinbase",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 58321.56526110987,
+      "profit_usd": 596921.2204474594,
+      "buy_price_info": {
+        "bid": 0.5004772288236292,
+        "ask": 0.5009779564162491,
+        "last": 0.5007275926199392,
+        "volume": 292.97954023145076,
+        "timestamp": 1757780654349
+      },
+      "sell_price_info": {
+        "bid": 300.4698055202336,
+        "ask": 301.3725690821372,
+        "last": 300.9211873011854,
+        "volume": 811.205880151018,
+        "timestamp": 1757780654676,
+        "fee": 0.003,
+        "liquidity": 90337.69928659216
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "ADA",
+      "direction": "cex_to_dex",
+      "buy_exchange": "coinbase",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 58492.894008064606,
+      "profit_usd": 596042.5899421782,
+      "buy_price_info": {
+        "bid": 0.5004772288236292,
+        "ask": 0.5009779564162491,
+        "last": 0.5007275926199392,
+        "volume": 292.97954023145076,
+        "timestamp": 1757780654349
+      },
+      "sell_price_info": {
+        "bid": 300.023784139503,
+        "ask": 300.92520762715293,
+        "last": 300.47449588332796,
+        "volume": 993.9097405762669,
+        "timestamp": 1757780655546,
+        "fee": 0.003,
+        "liquidity": 99969.6198840917
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "ADA",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kucoin",
+      "sell_exchange": "uniswap_v3",
+      "profit_pct": 58299.72560942693,
+      "profit_usd": 596697.6916124846,
+      "buy_price_info": {
+        "bid": 0.5006643844447759,
+        "ask": 0.5011652992866417,
+        "last": 0.5009148418657088,
+        "volume": 730.3340328901222,
+        "timestamp": 1757780654350
+      },
+      "sell_price_info": {
+        "bid": 300.4698055202336,
+        "ask": 301.3725690821372,
+        "last": 300.9211873011854,
+        "volume": 811.205880151018,
+        "timestamp": 1757780654676,
+        "fee": 0.003,
+        "liquidity": 90337.69928659216
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    },
+    {
+      "token": "ADA",
+      "direction": "cex_to_dex",
+      "buy_exchange": "kucoin",
+      "sell_exchange": "sushiswap",
+      "profit_pct": 58470.99047265781,
+      "profit_usd": 595819.392916383,
+      "buy_price_info": {
+        "bid": 0.5006643844447759,
+        "ask": 0.5011652992866417,
+        "last": 0.5009148418657088,
+        "volume": 730.3340328901222,
+        "timestamp": 1757780654350
+      },
+      "sell_price_info": {
+        "bid": 300.023784139503,
+        "ask": 300.92520762715293,
+        "last": 300.47449588332796,
+        "volume": 993.9097405762669,
+        "timestamp": 1757780655546,
+        "fee": 0.003,
+        "liquidity": 99969.6198840917
+      },
+      "diagnostic_note": "profit_pct exceeded thresholds"
+    }
+  ],
+  "graph_edges_sample": [
+    {
+      "edge": "SOL@binance->SOL@uniswap_v3",
+      "weight": -1.0187845541036669,
+      "rate": 2.7698261433714504,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "SOL@binance->SOL@sushiswap",
+      "weight": -1.0327374427426868,
+      "rate": 2.8087440966464725,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "SOL@kraken->SOL@uniswap_v3",
+      "weight": -1.016391181199677,
+      "rate": 2.763204843311915,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "SOL@kraken->SOL@sushiswap",
+      "weight": -1.030344069838697,
+      "rate": 2.8020297627887856,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "SOL@coinbase->SOL@uniswap_v3",
+      "weight": -1.0169493403833405,
+      "rate": 2.7647475819783773,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "SOL@coinbase->SOL@sushiswap",
+      "weight": -1.0309022290223602,
+      "rate": 2.8035941779895244,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "SOL@kucoin->SOL@uniswap_v3",
+      "weight": -1.0167823646666918,
+      "rate": 2.7642859748091904,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "SOL@kucoin->SOL@sushiswap",
+      "weight": -1.0307352533057117,
+      "rate": 2.803126084923638,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "LINK@binance->LINK@uniswap_v3",
+      "weight": -1.01404923225373,
+      "rate": 2.756741130438767,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "LINK@binance->LINK@sushiswap",
+      "weight": -1.027990869727495,
+      "rate": 2.7954437781484787,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "LINK@kraken->LINK@uniswap_v3",
+      "weight": -1.0152116250319707,
+      "rate": 2.7599474095370864,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "LINK@kraken->LINK@sushiswap",
+      "weight": -1.0291532625057354,
+      "rate": 2.7986950710818044,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "LINK@coinbase->LINK@uniswap_v3",
+      "weight": -1.0130568690737956,
+      "rate": 2.7540067989936263,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "LINK@coinbase->LINK@sushiswap",
+      "weight": -1.0269985065475606,
+      "rate": 2.7926710586713703,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "LINK@kucoin->LINK@uniswap_v3",
+      "weight": -1.0147238903778397,
+      "rate": 2.7586016157636855,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "LINK@kucoin->LINK@sushiswap",
+      "weight": -1.0286655278516048,
+      "rate": 2.7973303833390983,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "DOT@binance->DOT@uniswap_v3",
+      "weight": -1.0090636125451111,
+      "rate": 2.743031271995655,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "DOT@binance->DOT@sushiswap",
+      "weight": -1.0276730699641003,
+      "rate": 2.794555527927531,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "DOT@kraken->DOT@uniswap_v3",
+      "weight": -1.0079202918939283,
+      "rate": 2.7398968998331865,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "DOT@kraken->DOT@sushiswap",
+      "weight": -1.0265297493129177,
+      "rate": 2.791362280682181,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "DOT@coinbase->DOT@uniswap_v3",
+      "weight": -1.0099071330955676,
+      "rate": 2.74534605138887,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "DOT@coinbase->DOT@sushiswap",
+      "weight": -1.028516590514557,
+      "rate": 2.7969137874250745,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "DOT@kucoin->DOT@uniswap_v3",
+      "weight": -1.0088726402256432,
+      "rate": 2.7425074789678456,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "DOT@kucoin->DOT@sushiswap",
+      "weight": -1.0274820976446326,
+      "rate": 2.794021896132554,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "MATIC@binance->MATIC@uniswap_v3",
+      "weight": -1.0123926728031911,
+      "rate": 2.7521782052882995,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "MATIC@binance->MATIC@sushiswap",
+      "weight": -1.0267675165690238,
+      "rate": 2.7920260541411266,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "MATIC@kraken->MATIC@uniswap_v3",
+      "weight": -1.0129230293021123,
+      "rate": 2.7536382280177127,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "MATIC@kraken->MATIC@sushiswap",
+      "weight": -1.0272978730679452,
+      "rate": 2.7935072160413,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "MATIC@coinbase->MATIC@uniswap_v3",
+      "weight": -1.0133240539738058,
+      "rate": 2.754742726334801,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "MATIC@coinbase->MATIC@sushiswap",
+      "weight": -1.0276988977396384,
+      "rate": 2.7946277060125304,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "MATIC@kucoin->MATIC@uniswap_v3",
+      "weight": -1.0127925303122796,
+      "rate": 2.7532789044567823,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "MATIC@kucoin->MATIC@sushiswap",
+      "weight": -1.0271673740781122,
+      "rate": 2.793142689957176,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "ADA@binance->ADA@uniswap_v3",
+      "weight": -6.315753225658616,
+      "rate": 553.2186021429397,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "ADA@binance->ADA@sushiswap",
+      "weight": -6.330283664085513,
+      "rate": 561.3157964039713,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "ADA@kraken->ADA@uniswap_v3",
+      "weight": -6.317578864325114,
+      "rate": 554.229501902108,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "ADA@kraken->ADA@sushiswap",
+      "weight": -6.332109302752011,
+      "rate": 562.3414922160864,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "ADA@coinbase->ADA@uniswap_v3",
+      "weight": -6.314458070751392,
+      "rate": 552.502562147056,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "ADA@coinbase->ADA@sushiswap",
+      "weight": -6.32898850917829,
+      "rate": 560.5892760754977,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    },
+    {
+      "edge": "ADA@kucoin->ADA@uniswap_v3",
+      "weight": -6.314084186336148,
+      "rate": 552.2960286619181,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 22.5
+    },
+    {
+      "edge": "ADA@kucoin->ADA@sushiswap",
+      "weight": -6.328614624763045,
+      "rate": 560.3797196592001,
+      "ai_confidence": 1.0,
+      "total_fees": 0.004,
+      "gas_cost": 18.0
+    }
+  ]
+}

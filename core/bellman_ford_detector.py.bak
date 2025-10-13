@@ -1,0 +1,430 @@
+try:
+    import networkx as nx
+except Exception:
+    # When networkx isn't installed (tests), try to reuse the fallback provided
+    # by core.graph_builder which defines a compatible `nx` module. If that
+    # isn't available either, set nx to None and rely on the graph object
+    # implementing the expected methods.
+    try:
+        from core import graph_builder
+        nx = graph_builder.nx
+    except Exception:
+        nx = None
+
+import math
+from typing import Dict, List, Any, Optional, Tuple
+from collections import defaultdict, deque
+import time
+from utils.config import BELLMAN_FORD_CONFIG
+import logging
+
+logger = logging.getLogger(__name__)
+
+class BellmanFordDetector:
+    """
+    Bellman-Ford algorithm implementation for arbitrage cycle detection
+    """
+    def __init__(self, ai_model):
+        """Initialize detector with configurable defaults from utils.config."""
+        self.ai = ai_model
+        # Maximum cycle length to consider (configurable)
+        self.max_cycle_length = BELLMAN_FORD_CONFIG.get('max_cycle_length', 6)
+
+        # Configurable production-safe minimum profit threshold (log-space).
+        # Default approximates requiring ~0.1% profit.
+        self.min_profit_threshold = BELLMAN_FORD_CONFIG.get('min_profit_threshold', -0.001)
+ 
+        # Debug: log effective configuration used by detector
+        logger.debug("Bellman-Ford detector config: max_cycle_length=%s, min_profit_threshold=%s, raw_config=%s",
+                     self.max_cycle_length, self.min_profit_threshold, BELLMAN_FORD_CONFIG)
+
+    def detect_all_cycles(self, graph: nx.DiGraph) -> List[Dict[str, Any]]:
+        """
+        Detect all negative weight cycles (profitable arbitrage opportunities)
+        """
+        try:
+            logger.info(f"🔍 Running Bellman-Ford on graph with {graph.number_of_nodes()} nodes")
+ 
+            # Sample light-weight diagnostic: show top 10 smallest-weight edges to help spot potentially profitable edges
+            try:
+                sample_edges = sorted(graph.edges(data=True), key=lambda e: e[2].get('weight', 0))[:10]
+                formatted = [
+                    {
+                        'edge': f"{u}->{v}",
+                        'weight': round(data.get('weight', 0), 8),
+                        'rate': data.get('rate'),
+                        'fee': data.get('fee')
+                    } for u, v, data in sample_edges
+                ]
+                logger.debug("Top-10 lightest edges (possible arbitrage contributors): %s", formatted)
+            except Exception:
+                logger.exception("Failed to sample graph edges for diagnostics")
+
+            cycles = []
+            processed_nodes = set()
+
+            # Try Bellman-Ford from multiple starting points
+            for start_node in graph.nodes():
+                if start_node in processed_nodes:
+                    continue
+
+                node_cycles = self.bellman_ford_from_node(graph, start_node)
+ 
+                # Log raw candidate cycles returned from the algorithm before any filtering
+                try:
+                    logger.debug("Raw cycles detected from %s: %s", start_node, node_cycles)
+                except Exception:
+                    logger.exception("Failed to log raw node_cycles for %s", start_node)
+ 
+                for cycle in node_cycles:
+                    if self.is_valid_cycle(cycle):
+                        cycles.append(cycle)
+                        # Mark nodes in this cycle as processed to avoid duplicates
+                        for node in cycle.get('path', []):
+                            processed_nodes.add(node)
+
+                # Limit processing time
+                if len(cycles) >= 50:  # Max 50 cycles
+                    break
+
+            logger.info(f"✅ Found {len(cycles)} potential arbitrage cycles")
+            return self.deduplicate_cycles(cycles)
+
+        except Exception as e:
+            logger.exception(f"❌ Error in cycle detection: {str(e)}")
+            return []
+
+    def bellman_ford_from_node(self, graph: nx.DiGraph, source: str) -> List[Dict[str, Any]]:
+        """
+        Modified Bellman-Ford to find negative cycles from a specific source
+        """
+        try:
+            # Initialize distances
+            distances = {node: float('inf') for node in graph.nodes()}
+            distances[source] = 0
+            predecessors = {node: None for node in graph.nodes()}
+
+            # Relax edges repeatedly
+            num_nodes = graph.number_of_nodes()
+
+            # Standard Bellman-Ford relaxation
+            # Debugging: Log initial distances and predecessors
+            logger.debug(f"🔍 Debug: Initial distances: {distances}")
+            logger.debug(f"🔍 Debug: Initial predecessors: {predecessors}")
+
+            # Debugging: Log each relaxation step
+            for _ in range(num_nodes - 1):
+                updated = False
+                for u, v, data in graph.edges(data=True):
+                    weight = data.get('weight', 0)
+                    logger.debug(f"🔍 Debug: Relaxing edge {u}->{v} with weight {weight}")
+                    if distances[u] != float('inf') and distances[u] + weight < distances[v]:
+                        distances[v] = distances[u] + weight
+                        predecessors[v] = u
+                        updated = True
+                        logger.debug(f"🔍 Debug: Updated distance for {v}: {distances[v]}")
+                        logger.debug(f"🔍 Debug: Updated predecessor for {v}: {predecessors[v]}")
+
+                if not updated:
+                    logger.debug("🔍 Debug: No updates in this iteration, breaking early.")
+                    break
+
+            # Debugging: Log negative cycle detection
+            negative_cycle_nodes = set()
+            for u, v, data in graph.edges(data=True):
+                weight = data.get('weight', 0)
+                if distances[u] != float('inf') and distances[u] + weight < distances[v]:
+                    negative_cycle_nodes.add(v)
+ 
+            logger.debug(f"🔍 Debug: Negative cycle nodes: {negative_cycle_nodes}")
+
+            # Extract cycles from negative cycle nodes
+            cycles = []
+            for cycle_node in negative_cycle_nodes:
+                cycle = self.extract_cycle(graph, predecessors, cycle_node)
+                if cycle:
+                    cycles.append(cycle)
+
+            return cycles
+
+        except Exception as e:
+            logger.exception(f"❌ Error in Bellman-Ford from {source}: {str(e)}")
+            return []
+
+    def extract_cycle(self, graph: nx.DiGraph, predecessors: Dict, cycle_node: str) -> Optional[Dict[str, Any]]:
+        """
+        Extract the actual cycle from predecessors
+        """
+        try:
+            # Follow predecessors to find the cycle
+            visited = set()
+            current = cycle_node
+            path = []
+
+            # Trace back to find cycle
+            while current not in visited and current is not None:
+                visited.add(current)
+                path.append(current)
+                current = predecessors[current]
+
+            if current is None:
+                return None
+
+            # Find the cycle part
+            cycle_start_idx = path.index(current)
+            # `path` was collected by following predecessors (which goes backwards along edges).
+            # Reverse the traced segment to produce forward traversal order for edge checks.
+            traced_segment = path[cycle_start_idx:]
+            cycle_nodes = list(reversed(traced_segment))
+            cycle_path = cycle_nodes + [cycle_nodes[0]]
+ 
+            if len(cycle_path) < 3:  # Need at least 3 nodes for meaningful arbitrage
+                return None
+
+            # Calculate cycle weight and gather edge data
+            cycle_weight = 0
+            edge_data = {}
+
+            for i in range(len(cycle_path) - 1):
+                u, v = cycle_path[i], cycle_path[i + 1]
+                if graph.has_edge(u, v):
+                    edge_info = graph[u][v]
+                    cycle_weight += edge_info.get('weight', 0)
+                    edge_data[f"{u}->{v}"] = edge_info
+                else:
+                    return None  # Invalid cycle
+
+            # Only return cycles that meet the minimum log-space profit threshold.
+            # cycle_weight is negative for profitable cycles (-log(product_rates) < 0).
+            if cycle_weight >= self.min_profit_threshold:
+                return None
+
+            # Classify cycle type
+            cycle_type = self.classify_cycle_type(cycle_path)
+
+            return {
+                'path': cycle_path,
+                'weight': cycle_weight,
+                'profit_estimate': -cycle_weight * 100,  # Convert to percentage
+                'edge_data': edge_data,
+                'strategy_type': cycle_type,
+                'cycle_length': len(cycle_path) - 1,
+                'exchanges_involved': self.get_exchanges_from_path(cycle_path),
+                'tokens_involved': self.get_tokens_from_path(cycle_path)
+            }
+
+        except Exception as e:
+            logger.exception(f"❌ Error extracting cycle: {str(e)}")
+            return None
+
+    def classify_cycle_type(self, path: List[str]) -> str:
+        """
+        Classify the type of arbitrage cycle
+        """
+        try:
+            exchanges = set()
+            exchange_types = set()
+            tokens = set()
+
+            for node in path:
+                if '@' in node:
+                    token, exchange = node.split('@', 1)
+                    tokens.add(token)
+                    exchanges.add(exchange)
+
+                    # Classify exchange type
+                    if any(dex in exchange.lower() for dex in ['uniswap', 'sushi', 'pancake']):
+                        exchange_types.add('dex')
+                    else:
+                        exchange_types.add('cex')
+
+            # Determine cycle type
+            if len(exchanges) == 1:
+                return 'triangular'
+            elif len(exchange_types) > 1:
+                return 'dex_cex'
+            elif 'dex' in exchange_types:
+                return 'dex_cross_protocol'
+            else:
+                return 'cross_exchange'
+
+        except Exception as e:
+            logger.exception(f"❌ Error classifying cycle: {str(e)}")
+            return 'unknown'
+
+    def get_exchanges_from_path(self, path: List[str]) -> List[str]:
+        """Extract unique exchanges from path"""
+        exchanges = []
+        for node in path:
+            if '@' in node:
+                exchange = node.split('@', 1)[1]
+                if exchange not in exchanges:
+                    exchanges.append(exchange)
+        return exchanges
+
+    def get_tokens_from_path(self, path: List[str]) -> List[str]:
+        """Extract unique tokens from path"""
+        tokens = []
+        for node in path:
+            if '@' in node:
+                token = node.split('@', 1)[0]
+                if token not in tokens:
+                    tokens.append(token)
+        return tokens
+
+    def is_valid_cycle(self, cycle: Dict[str, Any]) -> bool:
+        """
+        Validate if cycle is worth considering
+        """
+        try:
+            # Enforce minimum profit threshold (percentage) to avoid borderline cycles.
+            # Require at least 0.1% estimated profit before considering.
+            if cycle.get('profit_estimate', 0) < 0.1:
+                return False
+
+            # Check cycle length
+            if cycle.get('cycle_length', 0) > self.max_cycle_length:
+                return False
+
+            # Check if it involves multiple exchanges (more interesting)
+            exchanges = cycle.get('exchanges_involved', [])
+            if len(exchanges) < 2 and cycle.get('strategy_type') != 'triangular':
+                return False
+
+            return True
+
+        except Exception as e:
+            logger.exception(f"❌ Error validating cycle: {str(e)}")
+            return False
+
+    def deduplicate_cycles(self, cycles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Remove duplicate cycles
+        """
+        try:
+            unique_cycles = []
+            seen_signatures = set()
+
+            for cycle in cycles:
+                # Create signature for deduplication
+                path = cycle.get('path', [])
+                exchanges = sorted(cycle.get('exchanges_involved', []))
+                tokens = sorted(cycle.get('tokens_involved', []))
+
+                signature = f"{'-'.join(tokens)}_{'-'.join(exchanges)}"
+
+                if signature not in seen_signatures:
+                    seen_signatures.add(signature)
+                    unique_cycles.append(cycle)
+
+            # Sort by profit estimate (highest first)
+            unique_cycles.sort(key=lambda x: x.get('profit_estimate', 0), reverse=True)
+
+            return unique_cycles[:20]  # Return top 20
+
+        except Exception as e:
+            logger.exception(f"❌ Error deduplicating cycles: {str(e)}")
+            return cycles
+
+    def find_simple_arbitrage(self, graph: nx.DiGraph, token: str) -> List[Dict[str, Any]]:
+        """
+        Find simple two-exchange arbitrage for a specific token (fallback method)
+        """
+        try:
+            opportunities = []
+
+            # Get all nodes for this token
+            token_nodes = [node for node in graph.nodes() if node.startswith(f"{token}@")]
+
+            # Compare prices between all pairs
+            for i, node1 in enumerate(token_nodes):
+                for j, node2 in enumerate(token_nodes):
+                    if i >= j:
+                        continue
+
+                    exchange1 = node1.split('@')[1]
+                    exchange2 = node2.split('@')[1]
+
+                    # Check if there are paths between these nodes
+                    if graph.has_edge(node1, node2) and graph.has_edge(node2, node1):
+                        edge1 = graph[node1][node2]
+                        edge2 = graph[node2][node1]
+
+                        # Calculate round-trip profit
+                        round_trip_weight = edge1.get('weight', 0) + edge2.get('weight', 0)
+
+                        if round_trip_weight < -0.005:  # Profitable
+                            opportunities.append({
+                                'path': [node1, node2, node1],
+                                'weight': round_trip_weight,
+                                'profit_estimate': -round_trip_weight * 100,
+                                'strategy_type': 'cross_exchange',
+                                'exchanges_involved': [exchange1, exchange2],
+                                'tokens_involved': [token],
+                                'cycle_length': 2
+                            })
+
+            return sorted(opportunities, key=lambda x: x.get('profit_estimate', 0), reverse=True)
+
+        except Exception as e:
+            logger.exception(f"❌ Error in simple arbitrage detection: {str(e)}")
+            return []
+
+    def analyze_cycle_execution_complexity(self, cycle: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Analyze the complexity of executing a cycle
+        """
+        try:
+            path = cycle.get('path', [])
+            edge_data = cycle.get('edge_data', {})
+
+            complexity_score = 0
+            execution_steps = []
+
+            for i in range(len(path) - 1):
+                u, v = path[i], path[i + 1]
+                edge_key = f"{u}->{v}"
+                edge_info = edge_data.get(edge_key, {})
+
+                # Determine step type
+                if edge_info.get('operation') in ['wrap', 'unwrap']:
+                    step_type = 'wrap_unwrap'
+                    complexity_score += 2
+                elif edge_info.get('transfer_type') == 'cross_exchange':
+                    step_type = 'transfer'
+                    complexity_score += 3
+                else:
+                    step_type = 'trade'
+                    complexity_score += 1
+
+                execution_steps.append({
+                    'step': i + 1,
+                    'from': u,
+                    'to': v,
+                    'type': step_type,
+                    'exchange': edge_info.get('exchange', 'unknown'),
+                    'fee': edge_info.get('fee', 0),
+                    'estimated_time': self.estimate_step_time(step_type)
+                })
+
+            total_time = sum(step['estimated_time'] for step in execution_steps)
+
+            return {
+                'complexity_score': complexity_score,
+                'execution_steps': execution_steps,
+                'total_estimated_time': total_time,
+                'risk_level': 'HIGH' if complexity_score > 6 else 'MEDIUM' if complexity_score > 3 else 'LOW'
+            }
+
+        except Exception as e:
+            logger.exception(f"❌ Error analyzing execution complexity: {str(e)}")
+            return {'complexity_score': 10, 'risk_level': 'HIGH'}
+
+    def estimate_step_time(self, step_type: str) -> int:
+        """Estimate execution time for different step types (in seconds)"""
+        time_estimates = {
+            'trade': 10,        # 10 seconds for exchange trade
+            'transfer': 180,    # 3 minutes for cross-exchange transfer
+            'wrap_unwrap': 60   # 1 minute for wrap/unwrap operation
+        }
+        return time_estimates.get(step_type, 30)  # Default 30 seconds
