@@ -21,6 +21,29 @@ class DEXCEXArbitrage:
 
         # CEX exchanges we support  
         self.cex_exchanges = ['binance', 'kraken', 'coinbase', 'kucoin']
+    
+    def get_strategy_info(self) -> Dict[str, Any]:
+        """Get detailed strategy information for UI display"""
+        return {
+            'name': 'DEX/CEX Arbitrage',
+            'key': 'dex_cex',
+            'description': 'Exploits price differences between decentralized exchanges (DEX) and centralized exchanges (CEX)',
+            'how_it_works': 'Finds opportunities to buy a token on one exchange type and sell it on another for profit. For example: Buy BTC on Binance (CEX) for $50,000, sell on Uniswap (DEX) for $50,500.',
+            'supported_exchanges': {
+                'CEX': self.cex_exchanges,
+                'DEX': self.dex_protocols
+            },
+            'typical_profit': '0.3% - 2%',
+            'execution_speed': 'Medium (5-30 seconds)',
+            'risk_level': 'Medium',
+            'capital_required': '$500 - $10,000',
+            'fees': {
+                'CEX': '0.1%',
+                'DEX': '0.3% + gas fees ($5-50)',
+            },
+            'best_conditions': 'High market volatility, network congestion differences',
+            'status': 'Active ✅'
+        }
 
     async def add_strategy_edges(self, graph, price_data: Dict[str, Any]):
         """

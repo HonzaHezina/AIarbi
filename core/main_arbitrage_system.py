@@ -274,3 +274,29 @@ class MainArbitrageSystem:
             'data_engine_status': self.data_engine.get_status(),
             'ai_model_loaded': self.ai.is_loaded()
         }
+    
+    def get_all_strategies_info(self) -> List[Dict]:
+        """Get detailed information about all strategies"""
+        strategies_info = []
+        for strategy_key, strategy_obj in self.strategies.items():
+            try:
+                if hasattr(strategy_obj, 'get_strategy_info'):
+                    info = strategy_obj.get_strategy_info()
+                    strategies_info.append(info)
+                else:
+                    # Fallback for strategies without get_strategy_info
+                    strategies_info.append({
+                        'name': strategy_key.replace('_', ' ').title(),
+                        'key': strategy_key,
+                        'description': 'No description available',
+                        'status': 'Active ✅'
+                    })
+            except Exception as e:
+                logger.error(f"Error getting info for strategy {strategy_key}: {str(e)}")
+                strategies_info.append({
+                    'name': strategy_key,
+                    'key': strategy_key,
+                    'description': 'Error loading strategy info',
+                    'status': 'Error ❌'
+                })
+        return strategies_info

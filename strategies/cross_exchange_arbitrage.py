@@ -27,6 +27,28 @@ class CrossExchangeArbitrage:
             'USDC': {'fee_pct': 0.0001, 'time_minutes': 10},
             'BNB': {'fee_pct': 0.001, 'time_minutes': 5}
         }
+    
+    def get_strategy_info(self) -> Dict[str, Any]:
+        """Get detailed strategy information for UI display"""
+        return {
+            'name': 'Cross-Exchange Arbitrage',
+            'key': 'cross_exchange',
+            'description': 'Exploits price differences between different centralized exchanges (CEX)',
+            'how_it_works': 'Finds tokens that are cheaper on one CEX and more expensive on another. Example: Buy ETH on Kraken for $3,000, transfer to Binance and sell for $3,015.',
+            'supported_exchanges': {
+                'CEX': self.cex_exchanges
+            },
+            'typical_profit': '0.2% - 1.5%',
+            'execution_speed': 'Slow (5-30 minutes)',
+            'risk_level': 'Low-Medium',
+            'capital_required': '$1,000 - $50,000',
+            'fees': {
+                'Trading': '0.1% per exchange',
+                'Transfer': 'Varies by token (see transfer_costs)',
+            },
+            'best_conditions': 'Low volatility, price inefficiencies between exchanges',
+            'status': 'Active ✅'
+        }
 
     async def add_strategy_edges(self, graph, price_data: Dict[str, Any]):
         """

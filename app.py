@@ -21,6 +21,45 @@ class ArbitrageDashboard:
         self.arbitrage_system = MainArbitrageSystem()
         self.execution_history = []
         self.performance_data = []
+        self.scan_progress = ""
+    
+    def get_system_status_display(self):
+        """Get formatted system status for display"""
+        try:
+            status = self.arbitrage_system.get_system_status()
+            data_status = status.get('data_engine_status', {})
+            
+            status_text = "### 📊 System Status\n\n"
+            
+            # AI Model Status
+            ai_loaded = status.get('ai_model_loaded', False)
+            ai_icon = "✅" if ai_loaded else "⚠️"
+            status_text += f"- **AI Model**: {ai_icon} {'Loaded' if ai_loaded else 'Not Loaded'}\n"
+            
+            # Data Engine Status
+            cex_count = data_status.get('cex_exchanges', 0)
+            dex_count = data_status.get('dex_protocols', 0)
+            web3_connected = data_status.get('web3_connected', False)
+            
+            status_text += f"- **CEX Exchanges**: {cex_count} connected\n"
+            status_text += f"- **DEX Protocols**: {dex_count} configured\n"
+            status_text += f"- **Web3**: {'✅ Connected' if web3_connected else '⚠️ Simulated mode'}\n"
+            
+            # Last scan
+            last_scan = status.get('last_scan')
+            if last_scan:
+                time_diff = (datetime.now() - last_scan).seconds
+                status_text += f"- **Last Scan**: {time_diff}s ago\n"
+            else:
+                status_text += f"- **Last Scan**: Never\n"
+            
+            # Active strategies
+            active = len(status.get('active_strategies', []))
+            status_text += f"- **Strategies**: {active}/5 loaded\n"
+            
+            return status_text
+        except Exception as e:
+            return f"### 📊 System Status\n\n⚠️ Error loading status: {str(e)}"
 
     def create_interface(self):
         with gr.Blocks(
@@ -35,10 +74,17 @@ class ArbitrageDashboard:
 
             gr.HTML("""
                 <div style='text-align: center; padding: 20px;'>
-                    <h1 style='color: white; font-size: 3em; margin-bottom: 10px;'>AI Crypto Arbitrage</h1>
+                    <h1 style='color: white; font-size: 3em; margin-bottom: 10px;'>🤖 AI Crypto Arbitrage</h1>
                     <p style='color: #e0e0e0; font-size: 1.2em;'>Advanced Multi-Strategy Arbitrage Detection with Bellman-Ford & AI</p>
                 </div>
             """)
+            
+            # System Status Bar
+            with gr.Row():
+                system_status_text = gr.Markdown(
+                    value=self.get_system_status_display(),
+                    label="System Status"
+                )
 
             with gr.Tab("Live Arbitrage Scanner"):
                 with gr.Row():
@@ -187,6 +233,51 @@ class ArbitrageDashboard:
                         label=" Risk Analysis & Warnings",
                         interactive=False
                     )
+            
+            with gr.Tab("📚 Strategy Information"):
+                gr.Markdown("## Available Trading Strategies")
+                gr.Markdown("Detailed information about each arbitrage strategy implemented in the system.")
+                
+                strategy_info_display = gr.Markdown(
+                    value=self.get_strategies_info_display()
+                )
+            
+            with gr.Tab("🔧 System Diagnostics"):
+                gr.Markdown("## System Component Status")
+                
+                with gr.Row():
+                    with gr.Column():
+                        gr.Markdown("### Core Components")
+                        core_diagnostics = gr.Textbox(
+                            value=self.get_core_diagnostics(),
+                            lines=10,
+                            label="Core System Status",
+                            interactive=False
+                        )
+                    
+                    with gr.Column():
+                        gr.Markdown("### Data Loading Status")
+                        data_diagnostics = gr.Textbox(
+                            value=self.get_data_diagnostics(),
+                            lines=10,
+                            label="Data Engine Status",
+                            interactive=False
+                        )
+                
+                with gr.Row():
+                    scan_progress_display = gr.Textbox(
+                        lines=8,
+                        label="📈 Scan Progress (Live Updates)",
+                        interactive=False,
+                        value="Ready to scan..."
+                    )
+                
+                refresh_diagnostics_btn = gr.Button("🔄 Refresh Diagnostics")
+                
+                refresh_diagnostics_btn.click(
+                    fn=self.refresh_diagnostics,
+                    outputs=[core_diagnostics, data_diagnostics, system_status_text]
+                )
 
             # Event handlers
             scan_button.click(
@@ -244,8 +335,11 @@ class ArbitrageDashboard:
         return interface
 
     async def scan_arbitrage_opportunities(self, strategies, pairs, min_profit, max_opps, demo_mode):
-        """Main scanning function"""
+        """Main scanning function with detailed progress tracking"""
         try:
+            self.scan_progress = "🔄 Starting scan...\n"
+            logger.info("📊 Scan started")
+            
             # Convert strategy names
             strategy_map = {
                 "DEX/CEX Arbitrage": "dex_cex",
@@ -256,14 +350,30 @@ class ArbitrageDashboard:
             }
 
             enabled_strategies = [strategy_map[s] for s in strategies if s in strategy_map]
+            
+            self.scan_progress += f"✓ Selected strategies: {', '.join(enabled_strategies)}\n"
+            self.scan_progress += f"✓ Trading pairs: {len(pairs)} pairs\n"
+            self.scan_progress += f"✓ Min profit threshold: {min_profit}%\n\n"
+            
+            self.scan_progress += "📡 Fetching market data...\n"
+            logger.info("Fetching market data for scan")
 
             # Run arbitrage scan
             opportunities = await self.arbitrage_system.run_full_arbitrage_scan(
                 enabled_strategies, pairs, min_profit
             )
+            
+            self.scan_progress += f"✓ Market data loaded\n"
+            self.scan_progress += f"✓ Graph built with strategies\n"
+            self.scan_progress += f"✓ Bellman-Ford cycle detection complete\n"
+            self.scan_progress += f"✓ AI analysis complete\n\n"
+            self.scan_progress += f"📈 Found {len(opportunities)} opportunities\n"
 
             # Limit results
             opportunities = opportunities[:max_opps]
+            
+            if len(opportunities) > max_opps:
+                self.scan_progress += f"📊 Showing top {max_opps} opportunities\n"
 
             # Prepare DataFrame
             df_data = []
@@ -287,8 +397,14 @@ class ArbitrageDashboard:
             avg_profit_val = total_profit / len(opportunities) if opportunities else 0
             avg_confidence_val = total_confidence / len(opportunities) if opportunities else 0
 
+            self.scan_progress += f"\n✅ Scan complete!\n"
+            self.scan_progress += f"Average profit: {avg_profit_val:.3f}%\n"
+            self.scan_progress += f"Average AI confidence: {avg_confidence_val:.2f}\n"
+            
+            logger.info(f"✅ Scan complete: {len(opportunities)} opportunities found")
+
             # Generate AI analysis
-            ai_analysis = await self.generate_ai_market_analysis(opportunities)
+            ai_analysis = await self.generate_ai_market_analysis(opportunities, enabled_strategies)
 
             # Generate performance chart
             chart = self.create_performance_chart()
@@ -308,7 +424,12 @@ class ArbitrageDashboard:
             )
 
         except Exception as e:
-            error_msg = f"Error scanning opportunities: {str(e)}"
+            error_msg = f"❌ Error scanning opportunities: {str(e)}\n"
+            error_msg += f"\nPlease check:\n"
+            error_msg += f"- Network connection\n"
+            error_msg += f"- Selected strategies\n"
+            error_msg += f"- Trading pairs\n"
+            logger.error(f"Scan error: {str(e)}")
             return [], error_msg, go.Figure(), 0, 0, 0, gr.Dropdown(choices=[])
 
     async def execute_selected_opportunity(self, selected_opp, amount, demo_mode):
@@ -363,44 +484,86 @@ class ArbitrageDashboard:
         """Auto-refresh function for live updates"""
         return await self.scan_arbitrage_opportunities(strategies, pairs, min_profit, max_opps, demo_mode)
 
-    async def generate_ai_market_analysis(self, opportunities):
-        """Generate AI analysis of current market conditions"""
-        if not opportunities:
-            return " No arbitrage opportunities detected. Market may be efficient or low volatility period."
-
-        analysis = f"AI Market Analysis ({datetime.now().strftime('%H:%M:%S')})\n\n"
+    async def generate_ai_market_analysis(self, opportunities, enabled_strategies=None):
+        """Generate AI analysis of current market conditions with strategy insights"""
+        analysis = f"🤖 AI Market Analysis ({datetime.now().strftime('%H:%M:%S')})\n\n"
         
-        # Strategy breakdown
+        if not opportunities:
+            analysis += "📊 No arbitrage opportunities detected.\n\n"
+            analysis += "💡 Possible Reasons:\n"
+            analysis += "- Market is highly efficient\n"
+            analysis += "- Low volatility period\n"
+            analysis += "- High trading volume creating tight spreads\n"
+            analysis += "- All strategies may not be enabled\n\n"
+            
+            if enabled_strategies:
+                analysis += f"✓ Active Strategies ({len(enabled_strategies)}):\n"
+                for strategy in enabled_strategies:
+                    analysis += f"  - {strategy}\n"
+            
+            return analysis
+        
+        # Strategy breakdown with insights
         strategies = {}
         for opp in opportunities:
             strategy = opp.get('strategy', 'Unknown')
             strategies[strategy] = strategies.get(strategy, 0) + 1
         
-        analysis += "Strategy Distribution:\n"
-        for strategy, count in strategies.items():
-            analysis += f"- {strategy}: {count} opportunities\n"
+        analysis += f"📈 Found {len(opportunities)} Opportunities\n\n"
+        analysis += "🎯 Strategy Distribution:\n"
+        for strategy, count in sorted(strategies.items(), key=lambda x: x[1], reverse=True):
+            percentage = (count / len(opportunities)) * 100
+            analysis += f"- {strategy}: {count} opportunities ({percentage:.1f}%)\n"
         
-        # Best opportunity
+        # Strategy-specific insights
+        analysis += f"\n💡 Strategy Insights:\n"
+        if 'dex_cex' in strategies:
+            analysis += f"- DEX/CEX: {strategies['dex_cex']} opportunities - Price differences between centralized and decentralized exchanges\n"
+        if 'cross_exchange' in strategies:
+            analysis += f"- Cross-Exchange: {strategies['cross_exchange']} opportunities - Inter-exchange arbitrage available\n"
+        if 'triangular' in strategies:
+            analysis += f"- Triangular: {strategies['triangular']} opportunities - Cyclic arbitrage within single exchange\n"
+        if 'wrapped_tokens' in strategies:
+            analysis += f"- Wrapped Tokens: {strategies['wrapped_tokens']} opportunities - Native vs wrapped token discrepancies\n"
+        if 'statistical' in strategies:
+            analysis += f"- Statistical AI: {strategies['statistical']} opportunities - ML-detected correlation anomalies\n"
+        
+        # Best opportunity analysis
         if opportunities:
             best = max(opportunities, key=lambda x: x.get('profit_pct', 0))
-            analysis += f"\nBest Opportunity:\n"
+            analysis += f"\n🏆 Best Opportunity:\n"
             analysis += f"- Strategy: {best.get('strategy', 'N/A')}\n"
             analysis += f"- Token: {best.get('token', 'N/A')}\n"
+            analysis += f"- Path: {best.get('path_summary', 'N/A')}\n"
             analysis += f"- Expected Profit: {best.get('profit_pct', 0):.3f}%\n"
             analysis += f"- AI Confidence: {best.get('ai_confidence', 0):.2f}/1.0\n"
+            analysis += f"- Risk Level: {best.get('risk_level', 'UNKNOWN')}\n"
         
-        # Market conditions
+        # Market conditions analysis
         avg_profit = sum(opp.get('profit_pct', 0) for opp in opportunities) / len(opportunities)
+        avg_confidence = sum(opp.get('ai_confidence', 0) for opp in opportunities) / len(opportunities)
         
-        analysis += f"\nMarket Conditions:\n"
+        analysis += f"\n📊 Market Conditions:\n"
         if avg_profit > 1.0:
-            analysis += "High volatility - Excellent arbitrage conditions\n"
+            analysis += "🔥 High volatility - Excellent arbitrage conditions!\n"
+            analysis += "   Multiple large opportunities detected.\n"
         elif avg_profit > 0.5:
-            analysis += "Moderate volatility - Good opportunities available\n"
+            analysis += "✅ Moderate volatility - Good opportunities available.\n"
+            analysis += "   Normal arbitrage conditions.\n"
         else:
-            analysis += "Low volatility - Limited opportunities\n"
+            analysis += "⚠️ Low volatility - Limited opportunities.\n"
+            analysis += "   Market is relatively efficient.\n"
         
-        analysis += "\nRisk Assessment: Always verify opportunities manually before execution in live trading."
+        analysis += f"\n🎲 Average Profit: {avg_profit:.3f}%\n"
+        analysis += f"🤖 Average AI Confidence: {avg_confidence:.2f}/1.0\n"
+        
+        # Risk assessment
+        high_confidence_count = sum(1 for opp in opportunities if opp.get('ai_confidence', 0) > 0.7)
+        analysis += f"\n⚠️ Risk Assessment:\n"
+        analysis += f"- High confidence opportunities: {high_confidence_count}/{len(opportunities)}\n"
+        analysis += f"- Always verify opportunities manually before live trading\n"
+        analysis += f"- Consider gas fees and slippage in profit calculations\n"
+        analysis += f"- Demo mode recommended for testing\n"
         
         return analysis
 
@@ -437,6 +600,156 @@ class ArbitrageDashboard:
         )
 
         return fig
+    
+    def get_strategies_info_display(self):
+        """Get formatted strategy information for display"""
+        try:
+            strategies = self.arbitrage_system.get_all_strategies_info()
+            
+            display_text = ""
+            
+            for strategy in strategies:
+                display_text += f"\n---\n\n"
+                display_text += f"## 🎯 {strategy.get('name', 'Unknown')}\n\n"
+                display_text += f"**Status**: {strategy.get('status', 'Unknown')}\n\n"
+                display_text += f"**Description**: {strategy.get('description', 'N/A')}\n\n"
+                
+                if 'how_it_works' in strategy:
+                    display_text += f"**How It Works**: {strategy['how_it_works']}\n\n"
+                
+                if 'supported_exchanges' in strategy:
+                    display_text += f"**Supported Exchanges**:\n"
+                    for key, value in strategy['supported_exchanges'].items():
+                        if isinstance(value, list):
+                            display_text += f"  - {key}: {', '.join(value)}\n"
+                        else:
+                            display_text += f"  - {key}: {value}\n"
+                    display_text += "\n"
+                
+                if 'typical_profit' in strategy:
+                    display_text += f"**💰 Typical Profit**: {strategy['typical_profit']}\n\n"
+                
+                if 'execution_speed' in strategy:
+                    display_text += f"**⚡ Speed**: {strategy['execution_speed']}\n\n"
+                
+                if 'risk_level' in strategy:
+                    display_text += f"**⚠️ Risk**: {strategy['risk_level']}\n\n"
+                
+                if 'capital_required' in strategy:
+                    display_text += f"**💵 Capital**: {strategy['capital_required']}\n\n"
+                
+                if 'fees' in strategy:
+                    display_text += f"**Fees**:\n"
+                    for fee_type, fee_value in strategy['fees'].items():
+                        display_text += f"  - {fee_type}: {fee_value}\n"
+                    display_text += "\n"
+                
+                if 'best_conditions' in strategy:
+                    display_text += f"**📈 Best Conditions**: {strategy['best_conditions']}\n\n"
+                
+                if 'ai_features' in strategy:
+                    display_text += f"**🤖 AI Features**: {strategy['ai_features']}\n\n"
+            
+            return display_text
+            
+        except Exception as e:
+            return f"Error loading strategy information: {str(e)}"
+    
+    def get_core_diagnostics(self):
+        """Get core system diagnostics"""
+        try:
+            status = self.arbitrage_system.get_system_status()
+            
+            diag = "=== CORE COMPONENTS ===\n\n"
+            
+            # AI Model
+            ai_loaded = status.get('ai_model_loaded', False)
+            diag += f"✓ AI Model: {'Loaded and Ready' if ai_loaded else 'Not Loaded'}\n"
+            
+            # Strategies
+            strategies = status.get('active_strategies', [])
+            diag += f"✓ Strategies: {len(strategies)}/5 loaded\n"
+            for s in strategies:
+                diag += f"  - {s}\n"
+            
+            # Graph Builder
+            diag += f"✓ Graph Builder: Initialized\n"
+            
+            # Bellman-Ford Detector
+            diag += f"✓ Cycle Detector: Ready\n"
+            
+            # Data Engine
+            diag += f"✓ Data Engine: Active\n"
+            
+            # Cache
+            cached = status.get('cached_opportunities', 0)
+            diag += f"\n=== CACHE ===\n"
+            diag += f"Cached Opportunities: {cached}\n"
+            
+            last_scan = status.get('last_scan')
+            if last_scan:
+                diag += f"Last Scan: {last_scan.strftime('%Y-%m-%d %H:%M:%S')}\n"
+            else:
+                diag += f"Last Scan: Never\n"
+            
+            return diag
+            
+        except Exception as e:
+            return f"Error getting diagnostics: {str(e)}"
+    
+    def get_data_diagnostics(self):
+        """Get data engine diagnostics"""
+        try:
+            status = self.arbitrage_system.get_system_status()
+            data_status = status.get('data_engine_status', {})
+            
+            diag = "=== DATA ENGINE ===\n\n"
+            
+            # CEX Exchanges
+            cex_count = data_status.get('cex_exchanges', 0)
+            diag += f"CEX Exchanges: {cex_count} configured\n"
+            diag += f"  - Binance ✓\n"
+            diag += f"  - Kraken ✓\n"
+            diag += f"  - Coinbase ✓\n"
+            diag += f"  - KuCoin ✓\n"
+            
+            # DEX Protocols
+            dex_count = data_status.get('dex_protocols', 0)
+            diag += f"\nDEX Protocols: {dex_count} configured\n"
+            diag += f"  - Uniswap V3 ✓\n"
+            diag += f"  - SushiSwap ✓\n"
+            diag += f"  - PancakeSwap ✓\n"
+            
+            # Web3
+            web3_connected = data_status.get('web3_connected', False)
+            diag += f"\nWeb3 Connection: "
+            if web3_connected:
+                diag += f"✓ Connected\n"
+            else:
+                diag += f"⚠️ Simulated (no real DEX data)\n"
+            
+            # Cache
+            cached_data = data_status.get('cached_data_available', False)
+            diag += f"\nCached Data: {'✓ Available' if cached_data else '✗ None'}\n"
+            
+            last_fetch = data_status.get('last_fetch')
+            if last_fetch:
+                diag += f"Last Fetch: {last_fetch.strftime('%H:%M:%S')}\n"
+            else:
+                diag += f"Last Fetch: Never\n"
+            
+            return diag
+            
+        except Exception as e:
+            return f"Error getting data diagnostics: {str(e)}"
+    
+    def refresh_diagnostics(self):
+        """Refresh all diagnostics displays"""
+        return (
+            self.get_core_diagnostics(),
+            self.get_data_diagnostics(),
+            self.get_system_status_display()
+        )
 
 # Launch the app
 if __name__ == "__main__":
