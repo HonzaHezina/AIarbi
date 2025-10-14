@@ -93,12 +93,22 @@ class MainArbitrageSystem:
 
             # 5. Run Bellman-Ford detection
             logger.info(" Running Bellman-Ford cycle detection...")
+            
+            # Store graph stats for UI display
+            graph_stats = self.graph_builder.get_graph_statistics()
+            self.last_graph_stats = graph_stats
+            logger.info(f" Graph: {graph_stats.get('nodes', 0)} nodes, {graph_stats.get('edges', 0)} edges")
+            
             raw_cycles = self.detector.detect_all_cycles(graph)
 
             # Debugging: Log raw cycles before processing
             logger.debug(f" Debug: Raw cycles detected: {len(raw_cycles)}")
             for cycle in raw_cycles[:5]:  # Log first 5 cycles for brevity
                 logger.debug(f" Debug: Cycle: {cycle}")
+            
+            # Store for UI display
+            self.last_raw_cycles_count = len(raw_cycles)
+            logger.info(f" Bellman-Ford found {len(raw_cycles)} raw cycles")
 
             # 6. Process and filter opportunities
             logger.info(" Processing opportunities with AI...")

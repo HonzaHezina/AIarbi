@@ -322,7 +322,7 @@ class ArbitrageDashboard:
                 inputs=[enabled_strategies, trading_pairs, min_profit, max_opportunities, demo_mode],
                 outputs=[opportunities_df, ai_analysis_text, performance_chart, 
                         total_opportunities, avg_profit, ai_confidence, selected_opportunity,
-                        strategy_performance_chart, market_heatmap, risk_analysis]
+                        strategy_performance_chart, market_heatmap, risk_analysis, scan_progress_display]
             )
             
             # Refresh analytics
@@ -413,11 +413,33 @@ class ArbitrageDashboard:
                 enabled_strategies, pairs, min_profit
             )
             
-            self.scan_progress += f"✓ Market data loaded\n"
-            self.scan_progress += f"✓ Graph built with strategies\n"
-            self.scan_progress += f"✓ Bellman-Ford cycle detection complete\n"
+            self.scan_progress += f"✓ Market data loaded\n\n"
+            
+            # Display graph statistics
+            if hasattr(self.arbitrage_system, 'last_graph_stats'):
+                stats = self.arbitrage_system.last_graph_stats
+                self.scan_progress += f"📊 Graph Statistics:\n"
+                self.scan_progress += f"  • Nodes: {stats.get('nodes', 0)}\n"
+                self.scan_progress += f"  • Edges: {stats.get('edges', 0)}\n"
+                self.scan_progress += f"  • Tokens: {stats.get('tokens', 0)}\n"
+                self.scan_progress += f"  • Exchanges: {stats.get('exchanges', 0)}\n"
+                self.scan_progress += f"✓ Graph built successfully\n\n"
+            else:
+                self.scan_progress += f"✓ Graph built with strategies\n\n"
+            
+            # Display Bellman-Ford results
+            if hasattr(self.arbitrage_system, 'last_raw_cycles_count'):
+                raw_cycles = self.arbitrage_system.last_raw_cycles_count
+                self.scan_progress += f"🔍 Bellman-Ford Algorithm:\n"
+                self.scan_progress += f"  • Raw cycles detected: {raw_cycles}\n"
+                self.scan_progress += f"  • Max cycle length: {self.arbitrage_system.detector.max_cycle_length}\n"
+                self.scan_progress += f"  • Min profit threshold: {-self.arbitrage_system.detector.min_profit_threshold * 100:.2f}%\n"
+                self.scan_progress += f"✓ Bellman-Ford cycle detection complete\n\n"
+            else:
+                self.scan_progress += f"✓ Bellman-Ford cycle detection complete\n\n"
+            
             self.scan_progress += f"✓ AI analysis complete\n\n"
-            self.scan_progress += f"📈 Found {len(opportunities)} opportunities\n"
+            self.scan_progress += f"📈 Found {len(opportunities)} profitable opportunities\n"
 
             # Limit results
             opportunities = opportunities[:max_opps]
@@ -479,7 +501,8 @@ class ArbitrageDashboard:
                 gr.Dropdown(choices=execution_choices),
                 self.create_strategy_performance_chart(),
                 self.create_market_heatmap(),
-                self.generate_risk_analysis()
+                self.generate_risk_analysis(),
+                self.scan_progress
             )
 
         except Exception as e:
@@ -489,7 +512,8 @@ class ArbitrageDashboard:
             error_msg += f"- Selected strategies\n"
             error_msg += f"- Trading pairs\n"
             logger.error(f"Scan error: {str(e)}")
-            return [], error_msg, go.Figure(), 0, 0, 0, gr.Dropdown(choices=[]), go.Figure(), go.Figure(), "Error loading analytics"
+            error_progress = f"❌ Scan failed: {str(e)}"
+            return [], error_msg, go.Figure(), 0, 0, 0, gr.Dropdown(choices=[]), go.Figure(), go.Figure(), "Error loading analytics", error_progress
 
     async def execute_selected_opportunity(self, selected_opp, amount, demo_mode):
         """Execute selected arbitrage opportunity"""
@@ -734,11 +758,25 @@ class ArbitrageDashboard:
             # Graph Builder
             diag += f"✓ Graph Builder: Initialized\n"
             
+            # Get graph statistics if available
+            if hasattr(self.arbitrage_system, 'graph_builder') and self.arbitrage_system.graph_builder.graph:
+                graph_stats = self.arbitrage_system.graph_builder.get_graph_statistics()
+                diag += f"  - Nodes: {graph_stats.get('nodes', 0)}\n"
+                diag += f"  - Edges: {graph_stats.get('edges', 0)}\n"
+                diag += f"  - Tokens: {graph_stats.get('tokens', 0)}\n"
+                diag += f"  - Exchanges: {graph_stats.get('exchanges', 0)}\n"
+            
             # Bellman-Ford Detector
-            diag += f"✓ Cycle Detector: Ready\n"
+            diag += f"\n✓ Bellman-Ford Cycle Detector: Ready\n"
+            
+            # Add Bellman-Ford configuration
+            if hasattr(self.arbitrage_system, 'detector'):
+                detector = self.arbitrage_system.detector
+                diag += f"  - Max Cycle Length: {detector.max_cycle_length}\n"
+                diag += f"  - Min Profit Threshold: {-detector.min_profit_threshold * 100:.2f}%\n"
             
             # Data Engine
-            diag += f"✓ Data Engine: Active\n"
+            diag += f"\n✓ Data Engine: Active\n"
             
             # Cache
             cached = status.get('cached_opportunities', 0)
