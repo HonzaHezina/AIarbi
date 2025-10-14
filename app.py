@@ -149,15 +149,6 @@ class ArbitrageDashboard:
                             label="Detected Arbitrage Opportunities",
                             interactive=False
                         )
-                        
-                        # Add detailed comparison view
-                        gr.Markdown("### 🔍 Opportunity Details (Click on row above to see details)")
-                        opportunity_details = gr.Textbox(
-                            lines=12,
-                            label="Price Comparison & Calculation Details",
-                            interactive=False,
-                            value="Select an opportunity above to see detailed price comparison..."
-                        )
 
                         with gr.Row():
                             total_opportunities = gr.Number(
@@ -216,6 +207,18 @@ class ArbitrageDashboard:
                                 "Stop All",
                                 variant="stop"
                             )
+                        
+                        show_details_button = gr.Button(
+                            "🔍 Show Details of Selected Opportunity",
+                            variant="primary"
+                        )
+                        
+                        opportunity_details_display = gr.Textbox(
+                            lines=15,
+                            label="📊 Detailed Price Comparison",
+                            interactive=False,
+                            value="Select an opportunity and click 'Show Details' to see price breakdown..."
+                        )
 
                     with gr.Column():
                         gr.Markdown("###  Execution History")
@@ -332,6 +335,12 @@ class ArbitrageDashboard:
                 fn=self.execute_selected_opportunity,
                 inputs=[selected_opportunity, execution_amount, demo_mode],
                 outputs=[execution_history_df, ai_analysis_text]
+            )
+            
+            show_details_button.click(
+                fn=self.show_opportunity_details_from_dropdown,
+                inputs=[selected_opportunity],
+                outputs=[opportunity_details_display]
             )
 
             # Auto-refresh functionality
@@ -1151,6 +1160,31 @@ class ArbitrageDashboard:
             self.create_market_heatmap(),
             self.generate_risk_analysis()
         )
+    
+    def show_opportunity_details_from_dropdown(self, selected_opp):
+        """Show details for opportunity selected in dropdown"""
+        try:
+            if not selected_opp:
+                return "No opportunity selected. Please select an opportunity from the dropdown above."
+            
+            # Parse the dropdown value to find the opportunity
+            # Format: "strategy - token (profit%)"
+            opportunities = self.cached_opportunities
+            
+            if not opportunities:
+                return "No opportunities available. Please run a scan first."
+            
+            # Find matching opportunity
+            for idx, opp in enumerate(opportunities):
+                dropdown_label = f"{opp['strategy']} - {opp['token']} ({opp['profit_pct']:.2f}%)"
+                if dropdown_label == selected_opp:
+                    return self.generate_opportunity_details(idx)
+            
+            return "Could not find details for the selected opportunity."
+            
+        except Exception as e:
+            logger.error(f"Error showing opportunity details: {str(e)}")
+            return f"Error: {str(e)}"
 
 # Launch the app
 if __name__ == "__main__":
