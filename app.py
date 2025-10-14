@@ -29,53 +29,91 @@ class ArbitrageDashboard:
             status = self.arbitrage_system.get_system_status()
             data_status = status.get('data_engine_status', {})
             
-            status_text = "### 📊 System Status\n\n"
+            status_text = "### 📊 System Health Monitor\n\n"
+            status_text += "*Real-time status of all components*\n\n"
             
             # AI Model Status
             ai_loaded = status.get('ai_model_loaded', False)
             ai_icon = "✅" if ai_loaded else "⚠️"
-            status_text += f"- **AI Model**: {ai_icon} {'Loaded' if ai_loaded else 'Not Loaded'}\n"
+            ai_status = 'Ready' if ai_loaded else 'Fallback Mode (Rule-based)'
+            status_text += f"🤖 **AI Model**: {ai_icon} {ai_status}\n\n"
             
             # Data Engine Status
             cex_count = data_status.get('cex_exchanges', 0)
             dex_count = data_status.get('dex_protocols', 0)
             web3_connected = data_status.get('web3_connected', False)
             
-            status_text += f"- **CEX Exchanges**: {cex_count} connected\n"
-            status_text += f"- **DEX Protocols**: {dex_count} configured\n"
-            status_text += f"- **Web3**: {'✅ Connected' if web3_connected else '⚠️ Simulated mode'}\n"
+            status_text += f"📡 **Data Sources**:\n"
+            status_text += f"  • CEX Exchanges: {cex_count} connected\n"
+            status_text += f"  • DEX Protocols: {dex_count} configured\n"
+            status_text += f"  • Web3: {'✅ Live' if web3_connected else '⚠️ Simulated'}\n\n"
             
             # Last scan
             last_scan = status.get('last_scan')
             if last_scan:
                 time_diff = (datetime.now() - last_scan).seconds
-                status_text += f"- **Last Scan**: {time_diff}s ago\n"
+                if time_diff < 60:
+                    time_str = f"{time_diff}s ago"
+                else:
+                    time_str = f"{time_diff // 60}m ago"
+                status_text += f"⏱️ **Last Scan**: {time_str}\n\n"
             else:
-                status_text += f"- **Last Scan**: Never\n"
+                status_text += f"⏱️ **Last Scan**: Never (Start in Tab 1️⃣)\n\n"
             
             # Active strategies
             active = len(status.get('active_strategies', []))
-            status_text += f"- **Strategies**: {active}/5 loaded\n"
+            status_text += f"🎯 **Strategies**: {active}/5 loaded and ready\n"
             
             return status_text
         except Exception as e:
-            return f"### 📊 System Status\n\n⚠️ Error loading status: {str(e)}"
+            return f"### 📊 System Health Monitor\n\n⚠️ Error loading status: {str(e)}"
 
     def create_interface(self):
         with gr.Blocks(
             title="AI Crypto Arbitrage System",
-            theme=gr.themes.Soft(),
+            theme=gr.themes.Soft(
+                primary_hue="blue",
+                secondary_hue="cyan",
+                neutral_hue="slate",
+                font=gr.themes.GoogleFont("Inter"),
+            ),
             css="""
             .gradio-container {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            }
+            /* Better contrast for readability */
+            .gr-box {
+                background: rgba(255, 255, 255, 0.95) !important;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            /* Improve text readability */
+            .gr-text-input, .gr-textbox {
+                color: #1f2937 !important;
+                background: white !important;
+            }
+            /* Better button visibility */
+            .gr-button {
+                font-weight: 600 !important;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+            }
+            /* Tab styling for better organization */
+            .gr-tab {
+                font-weight: 600;
+                font-size: 1.1em;
+            }
+            /* Header styling */
+            h1, h2, h3 {
+                color: #1f2937 !important;
             }
             """
         ) as interface:
 
             gr.HTML("""
-                <div style='text-align: center; padding: 20px;'>
-                    <h1 style='color: white; font-size: 3em; margin-bottom: 10px;'>🤖 AI Crypto Arbitrage</h1>
-                    <p style='color: #e0e0e0; font-size: 1.2em;'>Advanced Multi-Strategy Arbitrage Detection with Bellman-Ford & AI</p>
+                <div style='text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 12px; margin-bottom: 20px;'>
+                    <h1 style='color: white; font-size: 3em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);'>🤖 AI Crypto Arbitrage</h1>
+                    <p style='color: #e0e0e0; font-size: 1.2em; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);'>Advanced Multi-Strategy Arbitrage Detection with Bellman-Ford & AI</p>
+                    <p style='color: #93c5fd; font-size: 0.95em; margin-top: 10px;'>📋 Follow the workflow: <strong>1️⃣ Configure & Scan</strong> → <strong>2️⃣ View Results</strong> → <strong>3️⃣ Execute</strong> → <strong>4️⃣ Review System</strong></p>
                 </div>
             """)
             
@@ -86,10 +124,23 @@ class ArbitrageDashboard:
                     label="System Status"
                 )
 
-            with gr.Tab("Live Arbitrage Scanner"):
+            with gr.Tab("1️⃣ Scanner & Configuration"):
+                gr.Markdown("""
+                ## 🔍 Live Arbitrage Scanner
+                **What this does:** Configure your scanning parameters and find arbitrage opportunities across exchanges.
+                
+                **How it works:** 
+                1. Select trading strategies and pairs below
+                2. Set minimum profit threshold
+                3. Click "🔍 Scan Opportunities" button
+                4. View results in the table on the right
+                
+                ---
+                """)
+                
                 with gr.Row():
                     with gr.Column(scale=1):
-                        gr.Markdown("### Configuration")
+                        gr.Markdown("### ⚙️ Configuration")
 
                         enabled_strategies = gr.CheckboxGroup(
                             choices=[
@@ -136,13 +187,16 @@ class ArbitrageDashboard:
                         )
 
                         scan_button = gr.Button(
-                            "Scan Opportunities",
+                            "🔍 Scan Opportunities",
                             variant="primary",
                             size="lg"
                         )
+                        
+                        gr.Markdown("**💡 Tip:** Start with demo mode enabled for safe testing")
 
                     with gr.Column(scale=2):
-                        gr.Markdown("### Live Opportunities")
+                        gr.Markdown("### 📊 Live Opportunities")
+                        gr.Markdown("*Results will appear here after scanning. Each row shows a profitable opportunity.*")
 
                         opportunities_df = gr.DataFrame(
                             headers=["Strategy", "Token", "Path", "Profit %", "AI Score", "Status"],
@@ -167,9 +221,24 @@ class ArbitrageDashboard:
                                 interactive=False
                             )
 
+            with gr.Tab("2️⃣ Results & Analysis"):
+                gr.Markdown("""
+                ## 📈 Scan Results & Detailed Analysis
+                **What this shows:** After running a scan, this tab displays detailed analysis of all found opportunities.
+                
+                **What you see:**
+                - 🤖 AI-powered market analysis and insights
+                - 📊 Strategy performance comparison charts
+                - 🗺️ Market opportunities heatmap
+                - ⚠️ Risk analysis and warnings
+                
+                ---
+                """)
+                
                 with gr.Row():
                     with gr.Column():
-                        gr.Markdown("### AI Market Analysis")
+                        gr.Markdown("### 🤖 AI Market Analysis")
+                        gr.Markdown("*AI analyzes market conditions and provides recommendations*")
                         ai_analysis_text = gr.Textbox(
                             lines=8,
                             label="AI Insights & Recommendations",
@@ -177,13 +246,53 @@ class ArbitrageDashboard:
                         )
 
                     with gr.Column():
-                        gr.Markdown("### Performance Chart")
+                        gr.Markdown("### 📈 Performance Chart")
+                        gr.Markdown("*Historical profit trends over time*")
                         performance_chart = gr.Plot(label="Profit Over Time")
 
-            with gr.Tab(" Execution Center"):
+                gr.Markdown("---")
+                gr.Markdown("### 📊 Advanced Analytics")
+                gr.Markdown("*Compare strategy effectiveness and see market distribution*")
+                
                 with gr.Row():
                     with gr.Column():
-                        gr.Markdown("### Manual Execution")
+                        strategy_performance_chart = gr.Plot(
+                            label="Strategy Performance Comparison"
+                        )
+
+                    with gr.Column():
+                        market_heatmap = gr.Plot(
+                            label="Market Opportunities Heatmap"
+                        )
+
+                with gr.Row():
+                    risk_analysis = gr.Textbox(
+                        lines=6,
+                        label="⚠️ Risk Analysis & Warnings",
+                        interactive=False
+                    )
+                
+                refresh_analytics_btn = gr.Button("🔄 Refresh Analytics", variant="secondary")
+
+            with gr.Tab("3️⃣ Execution Center"):
+                gr.Markdown("""
+                ## ⚡ Execute Arbitrage Opportunities
+                **What this does:** Select and execute specific arbitrage opportunities (or simulate them safely).
+                
+                **How to use:**
+                1. Select an opportunity from the dropdown
+                2. Click "🔍 Show Details" to see exact prices and calculations
+                3. Set execution amount
+                4. Click "▶️ Execute" (uses demo mode for safety by default)
+                
+                **Why it's safe:** Demo mode simulates execution without real trading. All details are transparent.
+                
+                ---
+                """)
+                
+                with gr.Row():
+                    with gr.Column():
+                        gr.Markdown("### ⚙️ Execution Controls")
 
                         selected_opportunity = gr.Dropdown(
                             label="Select Opportunity to Execute",
@@ -200,11 +309,11 @@ class ArbitrageDashboard:
 
                         with gr.Row():
                             execute_button = gr.Button(
-                                "Execute Arbitrage",
+                                "▶️ Execute Arbitrage",
                                 variant="secondary"
                             )
                             stop_all_button = gr.Button(
-                                "Stop All",
+                                "🛑 Stop All",
                                 variant="stop"
                             )
                         
@@ -215,114 +324,135 @@ class ArbitrageDashboard:
                         
                         opportunity_details_display = gr.Textbox(
                             lines=15,
-                            label="📊 Detailed Price Comparison",
+                            label="📊 Detailed Price Breakdown & Transparency",
                             interactive=False,
-                            value="Select an opportunity and click 'Show Details' to see price breakdown..."
+                            value="💡 How to use:\n1. Select an opportunity from dropdown above\n2. Click '🔍 Show Details' button\n3. See EXACT prices, fees, and calculations\n4. Verify everything is transparent!\n\n⬆️ Select an opportunity to begin..."
                         )
 
                     with gr.Column():
-                        gr.Markdown("###  Execution History")
+                        gr.Markdown("### 📜 Execution History")
+                        gr.Markdown("*Track all executed (or simulated) trades*")
                         execution_history_df = gr.DataFrame(
                             headers=["Time", "Strategy", "Token", "Profit", "Status"],
                             label="Recent Executions"
                         )
 
-            with gr.Tab(" Analytics & Insights"):
-                gr.Markdown("### 📊 Strategy Performance & Market Analysis")
-                gr.Markdown("Real-time comparison of strategy effectiveness and market opportunities distribution.")
-                
-                with gr.Row():
-                    with gr.Column():
-                        strategy_performance_chart = gr.Plot(
-                            label="Strategy Performance Comparison"
-                        )
-
-                    with gr.Column():
-                        market_heatmap = gr.Plot(
-                            label="Market Opportunities Heatmap"
-                        )
-
-                with gr.Row():
-                    risk_analysis = gr.Textbox(
-                        lines=6,
-                        label=" Risk Analysis & Warnings",
-                        interactive=False
-                    )
-                
-                refresh_analytics_btn = gr.Button("🔄 Refresh Analytics", variant="secondary")
-            
-            with gr.Tab("📚 Strategy Information"):
-                gr.Markdown("## Available Trading Strategies")
+            with gr.Tab("4️⃣ System Info & Help"):
                 gr.Markdown("""
-                ### 🔍 How the System Works (Transparency)
+                # 📚 Understanding the System
                 
-                This system **continuously monitors real prices** from multiple exchanges and compares them to find arbitrage opportunities.
+                ## 🎯 What Does This System Do?
                 
-                **What gets compared:**
-                - 📊 **Real-time bid/ask prices** from exchanges
-                - 💱 **Conversion rates** between trading pairs
-                - 💸 **Transaction fees** (CEX: ~0.1%, DEX: ~0.3%)
-                - ⛽ **Gas costs** for DEX transactions
-                - 🎯 **AI confidence scores** for each opportunity
-                
-                **You can trust this because:**
-                ✓ All price data is shown in the opportunity details
-                ✓ Fee calculations are transparent
-                ✓ Each step of the trading path is documented
-                ✓ You can verify prices on the actual exchanges
+                This is an **AI-powered arbitrage scanner** that finds profitable trading opportunities by:
+                1. **Monitoring prices** across multiple exchanges (CEX & DEX)
+                2. **Comparing prices** to find discrepancies
+                3. **Calculating profits** including all fees and costs
+                4. **Analyzing risks** using AI models
                 
                 ---
+                
+                ## 🔍 How It Works (No More "Black Box"!)
+                
+                ### Step-by-Step Process:
+                
+                **1. Data Collection** 📡
+                - System connects to 4 CEX exchanges (Binance, Kraken, Coinbase, KuCoin)
+                - Monitors 3 DEX protocols (Uniswap V3, SushiSwap, PancakeSwap)
+                - Fetches real-time prices for selected trading pairs
+                
+                **2. Graph Building** 🕸️
+                - Creates a network graph of all possible trading paths
+                - Each node = token on an exchange
+                - Each edge = possible trade with price data
+                
+                **3. Arbitrage Detection** 🔍
+                - Uses Bellman-Ford algorithm to find profitable cycles
+                - Identifies price discrepancies across exchanges
+                - Filters by minimum profit threshold
+                
+                **4. AI Analysis** 🤖
+                - Evaluates opportunity confidence
+                - Assesses risk levels
+                - Provides recommendations
+                
+                **5. Results Display** 📊
+                - Shows all opportunities with transparent calculations
+                - You can see exact prices, fees, and profit calculations
+                - Everything is verifiable
+                
+                ---
+                
+                ## ✅ Why You Can Trust This System
+                
+                **Full Transparency:**
+                - ✓ All price data is shown (use "Show Details" in Execution Center)
+                - ✓ Fee calculations are visible (CEX: ~0.1%, DEX: ~0.3%, gas costs)
+                - ✓ Trading path is documented step-by-step
+                - ✓ You can verify prices on actual exchanges
+                - ✓ AI confidence scores help you assess risk
+                
+                **Safety Features:**
+                - ✓ Demo mode by default (no real trading)
+                - ✓ Risk warnings for each opportunity
+                - ✓ Clear labels showing simulated vs real execution
+                
+                ---
+                
+                ## 📋 Available Trading Strategies
                 """)
-                gr.Markdown("### Strategy Details")
                 
                 strategy_info_display = gr.Markdown(
                     value=self.get_strategies_info_display()
                 )
-            
-            with gr.Tab("🔧 System Diagnostics"):
-                gr.Markdown("## System Component Status")
                 
-                with gr.Row():
-                    with gr.Column():
-                        gr.Markdown("### Core Components")
-                        core_diagnostics = gr.Textbox(
-                            value=self.get_core_diagnostics(),
-                            lines=10,
-                            label="Core System Status",
-                            interactive=False
+                gr.Markdown("---")
+                gr.Markdown("## 🔧 System Diagnostics")
+                gr.Markdown("*Check the health and status of all system components*")
+            
+                with gr.Tab("💻 Component Status"):
+                    gr.Markdown("**What this shows:** Real-time status of all system components")
+                    
+                    with gr.Row():
+                        with gr.Column():
+                            gr.Markdown("### 🔧 Core Components")
+                            core_diagnostics = gr.Textbox(
+                                value=self.get_core_diagnostics(),
+                                lines=10,
+                                label="Core System Status",
+                                interactive=False
+                            )
+                        
+                        with gr.Column():
+                            gr.Markdown("### 📡 Data Sources")
+                            data_diagnostics = gr.Textbox(
+                                value=self.get_data_diagnostics(),
+                                lines=10,
+                                label="Data Engine Status",
+                                interactive=False
+                            )
+                    
+                    with gr.Row():
+                        scan_progress_display = gr.Textbox(
+                            lines=8,
+                            label="📈 Last Scan Progress",
+                            interactive=False,
+                            value="Ready to scan... Go to tab 1️⃣ to start scanning."
                         )
                     
-                    with gr.Column():
-                        gr.Markdown("### Data Loading Status")
-                        data_diagnostics = gr.Textbox(
-                            value=self.get_data_diagnostics(),
-                            lines=10,
-                            label="Data Engine Status",
-                            interactive=False
-                        )
-                
-                with gr.Row():
-                    scan_progress_display = gr.Textbox(
-                        lines=8,
-                        label="📈 Scan Progress (Live Updates)",
-                        interactive=False,
-                        value="Ready to scan..."
+                    refresh_diagnostics_btn = gr.Button("🔄 Refresh Diagnostics", variant="secondary")
+                    
+                    refresh_diagnostics_btn.click(
+                        fn=self.refresh_diagnostics,
+                        outputs=[core_diagnostics, data_diagnostics, system_status_text]
                     )
-                
-                refresh_diagnostics_btn = gr.Button("🔄 Refresh Diagnostics")
-                
-                refresh_diagnostics_btn.click(
-                    fn=self.refresh_diagnostics,
-                    outputs=[core_diagnostics, data_diagnostics, system_status_text]
-                )
 
             # Event handlers
             scan_button.click(
                 fn=self.scan_arbitrage_opportunities,
                 inputs=[enabled_strategies, trading_pairs, min_profit, max_opportunities, demo_mode],
                 outputs=[opportunities_df, ai_analysis_text, performance_chart, 
-                        total_opportunities, avg_profit, ai_confidence, selected_opportunity,
-                        strategy_performance_chart, market_heatmap, risk_analysis, scan_progress_display]
+                        total_opportunities, avg_profit, ai_confidence, selected_opportunity, scan_progress_display,
+                        strategy_performance_chart, market_heatmap, risk_analysis]
             )
             
             # Refresh analytics
@@ -387,7 +517,8 @@ class ArbitrageDashboard:
     async def scan_arbitrage_opportunities(self, strategies, pairs, min_profit, max_opps, demo_mode):
         """Main scanning function with detailed progress tracking"""
         try:
-            self.scan_progress = "🔄 Starting scan...\n"
+            self.scan_progress = "🔄 STARTING SCAN...\n"
+            self.scan_progress += "=" * 50 + "\n\n"
             logger.info("📊 Scan started")
             
             # Convert strategy names
@@ -401,11 +532,13 @@ class ArbitrageDashboard:
 
             enabled_strategies = [strategy_map[s] for s in strategies if s in strategy_map]
             
-            self.scan_progress += f"✓ Selected strategies: {', '.join(enabled_strategies)}\n"
-            self.scan_progress += f"✓ Trading pairs: {len(pairs)} pairs\n"
-            self.scan_progress += f"✓ Min profit threshold: {min_profit}%\n\n"
+            self.scan_progress += f"📋 Configuration:\n"
+            self.scan_progress += f"  ✓ Strategies: {', '.join(enabled_strategies)}\n"
+            self.scan_progress += f"  ✓ Trading pairs: {len(pairs)} pairs ({', '.join(pairs[:3])}...)\n"
+            self.scan_progress += f"  ✓ Min profit: {min_profit}%\n"
+            self.scan_progress += f"  ✓ Max results: {max_opps}\n\n"
             
-            self.scan_progress += "📡 Fetching market data...\n"
+            self.scan_progress += "📡 Step 1/5: Fetching market data...\n"
             logger.info("Fetching market data for scan")
 
             # Run arbitrage scan
@@ -413,39 +546,44 @@ class ArbitrageDashboard:
                 enabled_strategies, pairs, min_profit
             )
             
-            self.scan_progress += f"✓ Market data loaded\n\n"
+            self.scan_progress += f"  ✓ Data loaded successfully\n\n"
             
             # Display graph statistics
+            self.scan_progress += f"📊 Step 2/5: Building price graph...\n"
             if hasattr(self.arbitrage_system, 'last_graph_stats'):
                 stats = self.arbitrage_system.last_graph_stats
-                self.scan_progress += f"📊 Graph Statistics:\n"
-                self.scan_progress += f"  • Nodes: {stats.get('nodes', 0)}\n"
-                self.scan_progress += f"  • Edges: {stats.get('edges', 0)}\n"
-                self.scan_progress += f"  • Tokens: {stats.get('tokens', 0)}\n"
-                self.scan_progress += f"  • Exchanges: {stats.get('exchanges', 0)}\n"
-                self.scan_progress += f"✓ Graph built successfully\n\n"
+                self.scan_progress += f"  • Nodes (trading pairs): {stats.get('nodes', 0)}\n"
+                self.scan_progress += f"  • Edges (possible trades): {stats.get('edges', 0)}\n"
+                self.scan_progress += f"  • Tokens tracked: {stats.get('tokens', 0)}\n"
+                self.scan_progress += f"  • Exchanges monitored: {stats.get('exchanges', 0)}\n"
+                self.scan_progress += f"  ✓ Graph constructed\n\n"
             else:
-                self.scan_progress += f"✓ Graph built with strategies\n\n"
+                self.scan_progress += f"  ✓ Graph constructed with strategies\n\n"
             
             # Display Bellman-Ford results
+            self.scan_progress += f"🔍 Step 3/5: Detecting arbitrage cycles...\n"
             if hasattr(self.arbitrage_system, 'last_raw_cycles_count'):
                 raw_cycles = self.arbitrage_system.last_raw_cycles_count
-                self.scan_progress += f"🔍 Bellman-Ford Algorithm:\n"
-                self.scan_progress += f"  • Raw cycles detected: {raw_cycles}\n"
-                self.scan_progress += f"  • Max cycle length: {self.arbitrage_system.detector.max_cycle_length}\n"
-                self.scan_progress += f"  • Min profit threshold: {-self.arbitrage_system.detector.min_profit_threshold * 100:.2f}%\n"
-                self.scan_progress += f"✓ Bellman-Ford cycle detection complete\n\n"
+                self.scan_progress += f"  • Algorithm: Bellman-Ford cycle detection\n"
+                self.scan_progress += f"  • Raw cycles found: {raw_cycles}\n"
+                self.scan_progress += f"  • Max cycle length: {self.arbitrage_system.detector.max_cycle_length} hops\n"
+                self.scan_progress += f"  • Profit filter: ≥{-self.arbitrage_system.detector.min_profit_threshold * 100:.2f}%\n"
+                self.scan_progress += f"  ✓ Cycle detection complete\n\n"
             else:
-                self.scan_progress += f"✓ Bellman-Ford cycle detection complete\n\n"
+                self.scan_progress += f"  ✓ Cycle detection complete\n\n"
             
-            self.scan_progress += f"✓ AI analysis complete\n\n"
-            self.scan_progress += f"📈 Found {len(opportunities)} profitable opportunities\n"
+            self.scan_progress += f"🤖 Step 4/5: Running AI analysis...\n"
+            self.scan_progress += f"  ✓ AI confidence scores calculated\n\n"
+            
+            self.scan_progress += f"📊 Step 5/5: Filtering and sorting results...\n"
+            self.scan_progress += f"  ✓ Found {len(opportunities)} profitable opportunities\n"
 
             # Limit results
+            total_found = len(opportunities)
             opportunities = opportunities[:max_opps]
             
-            if len(opportunities) > max_opps:
-                self.scan_progress += f"📊 Showing top {max_opps} opportunities\n"
+            if total_found > max_opps:
+                self.scan_progress += f"  ℹ️ Displaying top {max_opps} of {total_found} opportunities\n"
 
             # Prepare DataFrame
             df_data = []
@@ -472,9 +610,16 @@ class ArbitrageDashboard:
             avg_profit_val = total_profit / len(opportunities) if opportunities else 0
             avg_confidence_val = total_confidence / len(opportunities) if opportunities else 0
 
-            self.scan_progress += f"\n✅ Scan complete!\n"
-            self.scan_progress += f"Average profit: {avg_profit_val:.3f}%\n"
-            self.scan_progress += f"Average AI confidence: {avg_confidence_val:.2f}\n"
+            self.scan_progress += f"\n" + "=" * 50 + "\n"
+            self.scan_progress += f"✅ SCAN COMPLETE!\n\n"
+            self.scan_progress += f"📈 Results Summary:\n"
+            self.scan_progress += f"  • Total opportunities: {len(opportunities)}\n"
+            self.scan_progress += f"  • Average profit: {avg_profit_val:.3f}%\n"
+            self.scan_progress += f"  • Average AI confidence: {avg_confidence_val:.2f}/1.0\n\n"
+            self.scan_progress += f"💡 Next steps:\n"
+            self.scan_progress += f"  1. View results in the table above\n"
+            self.scan_progress += f"  2. Check tab 2️⃣ for detailed analysis\n"
+            self.scan_progress += f"  3. Go to tab 3️⃣ to execute an opportunity\n"
             
             logger.info(f"✅ Scan complete: {len(opportunities)} opportunities found")
 
@@ -499,10 +644,10 @@ class ArbitrageDashboard:
                 avg_profit_val,
                 avg_confidence_val,
                 gr.Dropdown(choices=execution_choices),
+                self.scan_progress,
                 self.create_strategy_performance_chart(),
                 self.create_market_heatmap(),
-                self.generate_risk_analysis(),
-                self.scan_progress
+                self.generate_risk_analysis()
             )
 
         except Exception as e:
@@ -513,7 +658,7 @@ class ArbitrageDashboard:
             error_msg += f"- Trading pairs\n"
             logger.error(f"Scan error: {str(e)}")
             error_progress = f"❌ Scan failed: {str(e)}"
-            return [], error_msg, go.Figure(), 0, 0, 0, gr.Dropdown(choices=[]), go.Figure(), go.Figure(), "Error loading analytics", error_progress
+            return [], error_msg, go.Figure(), 0, 0, 0, gr.Dropdown(choices=[]), error_progress, go.Figure(), go.Figure(), "Error loading analytics"
 
     async def execute_selected_opportunity(self, selected_opp, amount, demo_mode):
         """Execute selected arbitrage opportunity"""
@@ -743,45 +888,47 @@ class ArbitrageDashboard:
         try:
             status = self.arbitrage_system.get_system_status()
             
-            diag = "=== CORE COMPONENTS ===\n\n"
+            diag = "=== CORE COMPONENTS ===\n"
+            diag += "(What's running in the system)\n\n"
             
             # AI Model
             ai_loaded = status.get('ai_model_loaded', False)
-            diag += f"✓ AI Model: {'Loaded and Ready' if ai_loaded else 'Not Loaded'}\n"
+            diag += f"🤖 AI Model: {'✓ Loaded and Ready' if ai_loaded else '⚠️ Fallback Mode (OK)'}\n"
             
             # Strategies
             strategies = status.get('active_strategies', [])
-            diag += f"✓ Strategies: {len(strategies)}/5 loaded\n"
+            diag += f"\n🎯 Strategies: {len(strategies)}/5 loaded\n"
             for s in strategies:
-                diag += f"  - {s}\n"
+                diag += f"   • {s}\n"
             
             # Graph Builder
-            diag += f"✓ Graph Builder: Initialized\n"
+            diag += f"\n🕸️ Graph Builder: ✓ Initialized\n"
             
             # Get graph statistics if available
             if hasattr(self.arbitrage_system, 'graph_builder') and self.arbitrage_system.graph_builder.graph:
                 graph_stats = self.arbitrage_system.graph_builder.get_graph_statistics()
-                diag += f"  - Nodes: {graph_stats.get('nodes', 0)}\n"
-                diag += f"  - Edges: {graph_stats.get('edges', 0)}\n"
-                diag += f"  - Tokens: {graph_stats.get('tokens', 0)}\n"
-                diag += f"  - Exchanges: {graph_stats.get('exchanges', 0)}\n"
+                diag += f"   • Nodes (trading pairs): {graph_stats.get('nodes', 0)}\n"
+                diag += f"   • Edges (possible trades): {graph_stats.get('edges', 0)}\n"
+                diag += f"   • Tokens tracked: {graph_stats.get('tokens', 0)}\n"
+                diag += f"   • Exchanges: {graph_stats.get('exchanges', 0)}\n"
             
             # Bellman-Ford Detector
-            diag += f"\n✓ Bellman-Ford Cycle Detector: Ready\n"
+            diag += f"\n🔍 Bellman-Ford Detector: ✓ Ready\n"
+            diag += f"   (Finds profitable cycles in price graph)\n"
             
             # Add Bellman-Ford configuration
             if hasattr(self.arbitrage_system, 'detector'):
                 detector = self.arbitrage_system.detector
-                diag += f"  - Max Cycle Length: {detector.max_cycle_length}\n"
-                diag += f"  - Min Profit Threshold: {-detector.min_profit_threshold * 100:.2f}%\n"
+                diag += f"   • Max cycle length: {detector.max_cycle_length} hops\n"
+                diag += f"   • Min profit filter: {-detector.min_profit_threshold * 100:.2f}%\n"
             
             # Data Engine
-            diag += f"\n✓ Data Engine: Active\n"
+            diag += f"\n📡 Data Engine: ✓ Active\n"
             
             # Cache
             cached = status.get('cached_opportunities', 0)
-            diag += f"\n=== CACHE ===\n"
-            diag += f"Cached Opportunities: {cached}\n"
+            diag += f"\n=== CACHE STATUS ===\n"
+            diag += f"💾 Cached Opportunities: {cached}\n"
             
             last_scan = status.get('last_scan')
             if last_scan:
@@ -800,34 +947,35 @@ class ArbitrageDashboard:
             status = self.arbitrage_system.get_system_status()
             data_status = status.get('data_engine_status', {})
             
-            diag = "=== DATA ENGINE ===\n\n"
+            diag = "=== DATA SOURCES ===\n"
+            diag += "(Where price data comes from)\n\n"
             
             # CEX Exchanges
             cex_count = data_status.get('cex_exchanges', 0)
-            diag += f"CEX Exchanges: {cex_count} configured\n"
-            diag += f"  - Binance ✓\n"
-            diag += f"  - Kraken ✓\n"
-            diag += f"  - Coinbase ✓\n"
-            diag += f"  - KuCoin ✓\n"
+            diag += f"📊 CEX Exchanges: {cex_count} configured\n"
+            diag += f"   • Binance ✓\n"
+            diag += f"   • Kraken ✓\n"
+            diag += f"   • Coinbase ✓\n"
+            diag += f"   • KuCoin ✓\n"
             
             # DEX Protocols
             dex_count = data_status.get('dex_protocols', 0)
-            diag += f"\nDEX Protocols: {dex_count} configured\n"
-            diag += f"  - Uniswap V3 ✓\n"
-            diag += f"  - SushiSwap ✓\n"
-            diag += f"  - PancakeSwap ✓\n"
+            diag += f"\n🌐 DEX Protocols: {dex_count} configured\n"
+            diag += f"   • Uniswap V3 ✓\n"
+            diag += f"   • SushiSwap ✓\n"
+            diag += f"   • PancakeSwap ✓\n"
             
             # Web3
             web3_connected = data_status.get('web3_connected', False)
-            diag += f"\nWeb3 Connection: "
+            diag += f"\n🔗 Web3 Connection: "
             if web3_connected:
-                diag += f"✓ Connected\n"
+                diag += f"✓ Live (real DEX data)\n"
             else:
-                diag += f"⚠️ Simulated (no real DEX data)\n"
+                diag += f"⚠️ Simulated (safe demo mode)\n"
             
             # Cache
             cached_data = data_status.get('cached_data_available', False)
-            diag += f"\nCached Data: {'✓ Available' if cached_data else '✗ None'}\n"
+            diag += f"\n💾 Cached Data: {'✓ Available' if cached_data else '✗ None yet'}\n"
             
             last_fetch = data_status.get('last_fetch')
             if last_fetch:
