@@ -81,39 +81,92 @@ class ArbitrageDashboard:
             .gradio-container {
                 background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
             }
-            /* Better contrast for readability */
+            /* Enhanced contrast for all boxes and containers */
             .gr-box {
-                background: rgba(255, 255, 255, 0.95) !important;
+                background: white !important;
                 border-radius: 8px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2) !important;
+                border: 2px solid #e5e7eb !important;
+                padding: 16px !important;
             }
-            /* Improve text readability */
+            /* Maximum text readability */
             .gr-text-input, .gr-textbox {
+                color: #000000 !important;
+                background: white !important;
+                border: 2px solid #3b82f6 !important;
+                font-weight: 500 !important;
+            }
+            /* High visibility buttons */
+            .gr-button {
+                font-weight: 700 !important;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+                border: 2px solid #1e40af !important;
+                font-size: 1.05em !important;
+            }
+            .gr-button-primary {
+                background: #2563eb !important;
+                color: white !important;
+            }
+            .gr-button:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3) !important;
+            }
+            /* Enhanced tab styling */
+            .gr-tab {
+                font-weight: 700 !important;
+                font-size: 1.15em !important;
+                padding: 12px 20px !important;
+                border: 2px solid transparent !important;
+            }
+            .gr-tab-active {
+                border-bottom: 3px solid #2563eb !important;
+                background: rgba(255, 255, 255, 0.15) !important;
+            }
+            /* High contrast headers */
+            h1, h2, h3 {
+                color: #000000 !important;
+                font-weight: 700 !important;
+            }
+            /* Better label visibility */
+            label {
+                color: #000000 !important;
+                font-weight: 600 !important;
+                font-size: 1.05em !important;
+            }
+            /* Enhanced markdown text */
+            .gr-markdown {
                 color: #1f2937 !important;
+                line-height: 1.7 !important;
+            }
+            .gr-markdown strong {
+                color: #000000 !important;
+                font-weight: 700 !important;
+            }
+            /* Number input and slider improvements */
+            .gr-number, .gr-slider {
+                border: 2px solid #3b82f6 !important;
+            }
+            /* Dropdown improvements */
+            .gr-dropdown {
+                border: 2px solid #3b82f6 !important;
                 background: white !important;
             }
-            /* Better button visibility */
-            .gr-button {
+            /* Checkbox improvements */
+            .gr-checkbox, .gr-checkboxgroup {
                 font-weight: 600 !important;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
             }
-            /* Tab styling for better organization */
-            .gr-tab {
-                font-weight: 600;
-                font-size: 1.1em;
-            }
-            /* Header styling */
-            h1, h2, h3 {
-                color: #1f2937 !important;
+            /* DataFrame styling */
+            .gr-dataframe {
+                border: 2px solid #3b82f6 !important;
             }
             """
         ) as interface:
 
             gr.HTML("""
-                <div style='text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 12px; margin-bottom: 20px;'>
-                    <h1 style='color: white; font-size: 3em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);'>🤖 AI Crypto Arbitrage</h1>
-                    <p style='color: #e0e0e0; font-size: 1.2em; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);'>Advanced Multi-Strategy Arbitrage Detection with Bellman-Ford & AI</p>
-                    <p style='color: #93c5fd; font-size: 0.95em; margin-top: 10px;'>📋 Follow the workflow: <strong>1️⃣ Configure & Scan</strong> → <strong>2️⃣ View Results</strong> → <strong>3️⃣ Execute</strong> → <strong>4️⃣ Review System</strong></p>
+                <div style='text-align: center; padding: 24px; background: rgba(255, 255, 255, 0.98); border-radius: 12px; margin-bottom: 20px; border: 3px solid #1e40af; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);'>
+                    <h1 style='color: #1e3a8a; font-size: 3em; margin-bottom: 10px; font-weight: 800;'>🤖 AI Crypto Arbitrage</h1>
+                    <p style='color: #1f2937; font-size: 1.2em; font-weight: 600;'>Advanced Multi-Strategy Arbitrage Detection with Bellman-Ford & AI</p>
+                    <p style='color: #2563eb; font-size: 1em; margin-top: 10px; font-weight: 700;'>📋 Follow the workflow: <strong style="color: #1e40af;">1️⃣ Configure & Scan</strong> → <strong style="color: #1e40af;">2️⃣ View Results</strong> → <strong style="color: #1e40af;">3️⃣ Execute</strong> → <strong style="color: #1e40af;">4️⃣ Review System</strong></p>
                 </div>
             """)
             
