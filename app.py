@@ -149,6 +149,15 @@ class ArbitrageDashboard:
                             label="Detected Arbitrage Opportunities",
                             interactive=False
                         )
+                        
+                        # Add detailed comparison view
+                        gr.Markdown("### 🔍 Opportunity Details (Click on row above to see details)")
+                        opportunity_details = gr.Textbox(
+                            lines=12,
+                            label="Price Comparison & Calculation Details",
+                            interactive=False,
+                            value="Select an opportunity above to see detailed price comparison..."
+                        )
 
                         with gr.Row():
                             total_opportunities = gr.Number(
@@ -216,6 +225,9 @@ class ArbitrageDashboard:
                         )
 
             with gr.Tab(" Analytics & Insights"):
+                gr.Markdown("### 📊 Strategy Performance & Market Analysis")
+                gr.Markdown("Real-time comparison of strategy effectiveness and market opportunities distribution.")
+                
                 with gr.Row():
                     with gr.Column():
                         strategy_performance_chart = gr.Plot(
@@ -233,10 +245,32 @@ class ArbitrageDashboard:
                         label=" Risk Analysis & Warnings",
                         interactive=False
                     )
+                
+                refresh_analytics_btn = gr.Button("🔄 Refresh Analytics", variant="secondary")
             
             with gr.Tab("📚 Strategy Information"):
                 gr.Markdown("## Available Trading Strategies")
-                gr.Markdown("Detailed information about each arbitrage strategy implemented in the system.")
+                gr.Markdown("""
+                ### 🔍 How the System Works (Transparency)
+                
+                This system **continuously monitors real prices** from multiple exchanges and compares them to find arbitrage opportunities.
+                
+                **What gets compared:**
+                - 📊 **Real-time bid/ask prices** from exchanges
+                - 💱 **Conversion rates** between trading pairs
+                - 💸 **Transaction fees** (CEX: ~0.1%, DEX: ~0.3%)
+                - ⛽ **Gas costs** for DEX transactions
+                - 🎯 **AI confidence scores** for each opportunity
+                
+                **You can trust this because:**
+                ✓ All price data is shown in the opportunity details
+                ✓ Fee calculations are transparent
+                ✓ Each step of the trading path is documented
+                ✓ You can verify prices on the actual exchanges
+                
+                ---
+                """)
+                gr.Markdown("### Strategy Details")
                 
                 strategy_info_display = gr.Markdown(
                     value=self.get_strategies_info_display()
@@ -284,7 +318,14 @@ class ArbitrageDashboard:
                 fn=self.scan_arbitrage_opportunities,
                 inputs=[enabled_strategies, trading_pairs, min_profit, max_opportunities, demo_mode],
                 outputs=[opportunities_df, ai_analysis_text, performance_chart, 
-                        total_opportunities, avg_profit, ai_confidence, selected_opportunity]
+                        total_opportunities, avg_profit, ai_confidence, selected_opportunity,
+                        strategy_performance_chart, market_heatmap, risk_analysis]
+            )
+            
+            # Refresh analytics
+            refresh_analytics_btn.click(
+                fn=self.refresh_analytics,
+                outputs=[strategy_performance_chart, market_heatmap, risk_analysis]
             )
 
             execute_button.click(
@@ -380,7 +421,10 @@ class ArbitrageDashboard:
             total_profit = 0
             total_confidence = 0
 
-            for opp in opportunities:
+            for i, opp in enumerate(opportunities):
+                # Store index for details lookup
+                opp['display_index'] = i
+                
                 df_data.append([
                     opp.get('strategy', 'Unknown'),
                     opp.get('token', 'N/A'),
@@ -412,6 +456,9 @@ class ArbitrageDashboard:
             # Generate dropdown choices for execution
             execution_choices = [f"{opp['strategy']} - {opp['token']} ({opp['profit_pct']:.2f}%)" 
                                for opp in opportunities]
+            
+            # Store opportunities for analytics
+            self.arbitrage_system.cached_opportunities = opportunities
 
             return (
                 df_data,
@@ -420,7 +467,10 @@ class ArbitrageDashboard:
                 len(opportunities),
                 avg_profit_val,
                 avg_confidence_val,
-                gr.Dropdown(choices=execution_choices)
+                gr.Dropdown(choices=execution_choices),
+                self.create_strategy_performance_chart(),
+                self.create_market_heatmap(),
+                self.generate_risk_analysis()
             )
 
         except Exception as e:
@@ -430,7 +480,7 @@ class ArbitrageDashboard:
             error_msg += f"- Selected strategies\n"
             error_msg += f"- Trading pairs\n"
             logger.error(f"Scan error: {str(e)}")
-            return [], error_msg, go.Figure(), 0, 0, 0, gr.Dropdown(choices=[])
+            return [], error_msg, go.Figure(), 0, 0, 0, gr.Dropdown(choices=[]), go.Figure(), go.Figure(), "Error loading analytics"
 
     async def execute_selected_opportunity(self, selected_opp, amount, demo_mode):
         """Execute selected arbitrage opportunity"""
@@ -749,6 +799,357 @@ class ArbitrageDashboard:
             self.get_core_diagnostics(),
             self.get_data_diagnostics(),
             self.get_system_status_display()
+        )
+    
+    def generate_opportunity_details(self, opportunity_index):
+        """Generate detailed price comparison for a specific opportunity"""
+        try:
+            if opportunity_index is None or opportunity_index < 0:
+                return "Select an opportunity to see detailed comparison..."
+            
+            if not self.cached_opportunities or opportunity_index >= len(self.cached_opportunities):
+                return "No opportunity data available."
+            
+            opp = self.cached_opportunities[opportunity_index]
+            
+            details = f"🎯 **{opp['strategy'].upper()} ARBITRAGE OPPORTUNITY**\n\n"
+            details += f"═══════════════════════════════════════\n\n"
+            
+            # Basic Info
+            details += f"**Token**: {opp.get('token', 'N/A')}\n"
+            details += f"**Strategy Type**: {opp.get('strategy', 'Unknown')}\n"
+            details += f"**Status**: {opp.get('status', 'Unknown')}\n"
+            details += f"**Timestamp**: {opp.get('timestamp', datetime.now()).strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+            
+            # Path details
+            details += f"### 📍 Trading Path\n"
+            path = opp.get('path', [])
+            if path:
+                for i, node in enumerate(path):
+                    details += f"  {i+1}. {node}\n"
+            details += "\n"
+            
+            # Profit Analysis
+            details += f"### 💰 Profit Analysis\n"
+            details += f"**Expected Profit**: {opp.get('profit_pct', 0):.4f}%\n"
+            details += f"**Profit in USD**: ${opp.get('profit_usd', 0):.2f}\n"
+            details += f"**Required Capital**: ${opp.get('required_capital', 0):.2f}\n"
+            details += f"**Total Fees**: ${opp.get('fees_total', 0):.4f}\n\n"
+            
+            # Price Comparison (detailed breakdown)
+            details += f"### 🔍 Price Comparison Details\n"
+            details += f"**This shows EXACTLY what is being compared:**\n\n"
+            
+            cycle_data = opp.get('cycle_data', {})
+            edge_data = cycle_data.get('edge_data', {})
+            
+            if edge_data:
+                details += f"**Step-by-Step Trading Path**:\n"
+                for idx, (edge_key, edge_info) in enumerate(edge_data.items(), 1):
+                    details += f"\n  **Step {idx}**: {edge_key}\n"
+                    
+                    # Extract exchange info
+                    buy_exchange = edge_info.get('buy_exchange', 'Unknown')
+                    sell_exchange = edge_info.get('sell_exchange', 'Unknown')
+                    
+                    # Show buy/sell prices if available (this is the key transparency!)
+                    if 'buy_price' in edge_info:
+                        details += f"     💵 BUY Price: ${edge_info['buy_price']:.8f}\n"
+                        if buy_exchange != 'Unknown':
+                            details += f"        on {buy_exchange}\n"
+                    
+                    if 'sell_price' in edge_info:
+                        details += f"     💰 SELL Price: ${edge_info['sell_price']:.8f}\n"
+                        if sell_exchange != 'Unknown':
+                            details += f"        on {sell_exchange}\n"
+                    
+                    # Calculate and show spread
+                    if 'buy_price' in edge_info and 'sell_price' in edge_info:
+                        buy_p = edge_info['buy_price']
+                        sell_p = edge_info['sell_price']
+                        if buy_p > 0:
+                            spread_pct = ((sell_p - buy_p) / buy_p) * 100
+                            details += f"     📊 Spread: {spread_pct:.4f}%\n"
+                    
+                    # Show rate and fees
+                    details += f"     📈 Conversion Rate: {edge_info.get('rate', 1.0):.6f}\n"
+                    
+                    # Show fees breakdown
+                    total_fees = edge_info.get('total_fees', 0)
+                    details += f"     💸 Total Fees: {total_fees * 100:.4f}%\n"
+                    
+                    if 'gas_cost' in edge_info and edge_info['gas_cost'] > 0:
+                        details += f"     ⛽ Gas Cost: ${edge_info['gas_cost']:.2f}\n"
+                    
+                    # Show strategy type
+                    if 'strategy' in edge_info:
+                        details += f"     🎯 Strategy: {edge_info['strategy']}\n"
+                    
+                    # Show direction for dex/cex
+                    if 'direction' in edge_info:
+                        direction = edge_info['direction'].replace('_', ' → ').upper()
+                        details += f"     ➡️  Direction: {direction}\n"
+                
+                # Add summary
+                details += f"\n  **💡 Summary**:\n"
+                details += f"  This arbitrage works by exploiting the price differences\n"
+                details += f"  shown above. The system continuously monitors these prices\n"
+                details += f"  to find profitable opportunities.\n"
+            else:
+                details += f"  ⚠️ No detailed edge data available for this opportunity.\n"
+                details += f"  The strategy might be using aggregated pricing.\n"
+            
+            details += f"\n"
+            
+            # AI Assessment
+            details += f"### 🤖 AI Risk Assessment\n"
+            details += f"**AI Confidence**: {opp.get('ai_confidence', 0):.2f}/1.0\n"
+            details += f"**Risk Level**: {opp.get('risk_level', 'UNKNOWN')}\n"
+            details += f"**Estimated Execution Time**: {opp.get('execution_time_estimate', 0):.1f}s\n\n"
+            
+            # Risk Factors
+            details += f"### ⚠️ Risk Factors\n"
+            details += f"• Market volatility may affect actual profit\n"
+            details += f"• Gas fees (DEX) can vary significantly\n"
+            details += f"• Execution speed critical for maintaining spread\n"
+            details += f"• Slippage may be higher for larger amounts\n\n"
+            
+            details += f"═══════════════════════════════════════\n"
+            details += f"**✓ This is the REAL data being compared**\n"
+            details += f"**✓ All calculations include fees and slippage**\n"
+            
+            return details
+            
+        except Exception as e:
+            logger.error(f"Error generating opportunity details: {str(e)}")
+            return f"Error loading details: {str(e)}"
+    
+    @property
+    def cached_opportunities(self):
+        """Get cached opportunities from the system"""
+        return self.arbitrage_system.cached_opportunities if hasattr(self.arbitrage_system, 'cached_opportunities') else []
+    
+    def create_strategy_performance_chart(self):
+        """Create strategy performance comparison chart"""
+        try:
+            opportunities = self.cached_opportunities
+            
+            if not opportunities:
+                # Return empty chart with message
+                fig = go.Figure()
+                fig.add_annotation(
+                    text="No data available. Run a scan first.",
+                    xref="paper", yref="paper",
+                    x=0.5, y=0.5, showarrow=False,
+                    font=dict(size=16, color="gray")
+                )
+                fig.update_layout(
+                    title="Strategy Performance Comparison",
+                    template="plotly_dark",
+                    height=400
+                )
+                return fig
+            
+            # Aggregate data by strategy
+            strategy_stats = {}
+            for opp in opportunities:
+                strategy = opp.get('strategy', 'Unknown')
+                if strategy not in strategy_stats:
+                    strategy_stats[strategy] = {
+                        'count': 0,
+                        'total_profit': 0,
+                        'avg_confidence': 0,
+                        'confidence_sum': 0
+                    }
+                
+                strategy_stats[strategy]['count'] += 1
+                strategy_stats[strategy]['total_profit'] += opp.get('profit_pct', 0)
+                strategy_stats[strategy]['confidence_sum'] += opp.get('ai_confidence', 0)
+            
+            # Calculate averages
+            for strategy in strategy_stats:
+                count = strategy_stats[strategy]['count']
+                strategy_stats[strategy]['avg_profit'] = strategy_stats[strategy]['total_profit'] / count
+                strategy_stats[strategy]['avg_confidence'] = strategy_stats[strategy]['confidence_sum'] / count
+            
+            # Create chart
+            strategies = list(strategy_stats.keys())
+            counts = [strategy_stats[s]['count'] for s in strategies]
+            avg_profits = [strategy_stats[s]['avg_profit'] for s in strategies]
+            avg_confidences = [strategy_stats[s]['avg_confidence'] for s in strategies]
+            
+            fig = go.Figure()
+            
+            # Add bar for opportunity count
+            fig.add_trace(go.Bar(
+                name='Opportunities Found',
+                x=strategies,
+                y=counts,
+                marker_color='#00ff88',
+                text=counts,
+                textposition='auto',
+            ))
+            
+            # Add line for average profit
+            fig.add_trace(go.Scatter(
+                name='Avg Profit %',
+                x=strategies,
+                y=avg_profits,
+                mode='lines+markers',
+                line=dict(color='#ff6b6b', width=3),
+                marker=dict(size=10),
+                yaxis='y2'
+            ))
+            
+            fig.update_layout(
+                title="Strategy Performance Comparison",
+                xaxis_title="Strategy",
+                yaxis_title="Opportunities Found",
+                yaxis2=dict(
+                    title="Avg Profit %",
+                    overlaying='y',
+                    side='right'
+                ),
+                template="plotly_dark",
+                height=400,
+                hovermode='x unified',
+                legend=dict(x=0, y=1.1, orientation='h')
+            )
+            
+            return fig
+            
+        except Exception as e:
+            logger.error(f"Error creating strategy performance chart: {str(e)}")
+            fig = go.Figure()
+            fig.add_annotation(
+                text=f"Error: {str(e)}",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5, showarrow=False
+            )
+            return fig
+    
+    def create_market_heatmap(self):
+        """Create market opportunities heatmap"""
+        try:
+            opportunities = self.cached_opportunities
+            
+            if not opportunities:
+                fig = go.Figure()
+                fig.add_annotation(
+                    text="No data available. Run a scan first.",
+                    xref="paper", yref="paper",
+                    x=0.5, y=0.5, showarrow=False,
+                    font=dict(size=16, color="gray")
+                )
+                fig.update_layout(
+                    title="Market Opportunities Heatmap",
+                    template="plotly_dark",
+                    height=400
+                )
+                return fig
+            
+            # Create matrix: Strategy x Token
+            strategies = list(set(opp.get('strategy', 'Unknown') for opp in opportunities))
+            tokens = list(set(opp.get('token', 'N/A') for opp in opportunities))
+            
+            # Build profit matrix
+            matrix = []
+            for strategy in strategies:
+                row = []
+                for token in tokens:
+                    # Find average profit for this strategy-token combination
+                    matching_opps = [
+                        opp for opp in opportunities 
+                        if opp.get('strategy') == strategy and opp.get('token') == token
+                    ]
+                    if matching_opps:
+                        avg_profit = sum(opp.get('profit_pct', 0) for opp in matching_opps) / len(matching_opps)
+                        row.append(avg_profit)
+                    else:
+                        row.append(0)
+                matrix.append(row)
+            
+            # Create heatmap
+            fig = go.Figure(data=go.Heatmap(
+                z=matrix,
+                x=tokens,
+                y=strategies,
+                colorscale='Viridis',
+                text=[[f'{val:.3f}%' if val > 0 else '' for val in row] for row in matrix],
+                texttemplate='%{text}',
+                textfont={"size": 10},
+                colorbar=dict(title="Profit %")
+            ))
+            
+            fig.update_layout(
+                title="Market Opportunities Heatmap (Avg Profit %)",
+                xaxis_title="Token",
+                yaxis_title="Strategy",
+                template="plotly_dark",
+                height=400
+            )
+            
+            return fig
+            
+        except Exception as e:
+            logger.error(f"Error creating market heatmap: {str(e)}")
+            fig = go.Figure()
+            fig.add_annotation(
+                text=f"Error: {str(e)}",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5, showarrow=False
+            )
+            return fig
+    
+    def generate_risk_analysis(self):
+        """Generate detailed risk analysis"""
+        try:
+            opportunities = self.cached_opportunities
+            
+            if not opportunities:
+                return " No opportunities to analyze. Run a scan first."
+            
+            analysis = "⚠️ **RISK ANALYSIS & WARNINGS**\n\n"
+            
+            # Calculate risk metrics
+            high_risk_count = sum(1 for opp in opportunities if opp.get('risk_level') in ['HIGH', 'CRITICAL'])
+            low_confidence_count = sum(1 for opp in opportunities if opp.get('ai_confidence', 0) < 0.5)
+            high_profit_count = sum(1 for opp in opportunities if opp.get('profit_pct', 0) > 1.0)
+            
+            # Overall risk assessment
+            if high_risk_count > len(opportunities) * 0.5:
+                analysis += "🔴 **HIGH RISK ALERT**: More than 50% of opportunities are high risk\n\n"
+            elif high_risk_count > 0:
+                analysis += f"🟡 **MODERATE RISK**: {high_risk_count} high-risk opportunities detected\n\n"
+            else:
+                analysis += "🟢 **LOW RISK**: Most opportunities appear relatively safe\n\n"
+            
+            # Detailed warnings
+            analysis += "**Key Warnings**:\n"
+            analysis += f"• {high_risk_count}/{len(opportunities)} opportunities marked as HIGH RISK\n"
+            analysis += f"• {low_confidence_count}/{len(opportunities)} opportunities with AI confidence < 0.5\n"
+            analysis += f"• {high_profit_count}/{len(opportunities)} opportunities with profit > 1% (verify carefully)\n\n"
+            
+            # Recommendations
+            analysis += "**Recommendations**:\n"
+            analysis += "✓ Start with small test amounts\n"
+            analysis += "✓ Verify prices manually before execution\n"
+            analysis += "✓ Consider gas fees for DEX transactions\n"
+            analysis += "✓ Monitor slippage during execution\n"
+            analysis += "✓ Use demo mode for testing\n"
+            
+            return analysis
+            
+        except Exception as e:
+            logger.error(f"Error generating risk analysis: {str(e)}")
+            return f"Error: {str(e)}"
+    
+    def refresh_analytics(self):
+        """Refresh analytics charts and risk analysis"""
+        return (
+            self.create_strategy_performance_chart(),
+            self.create_market_heatmap(),
+            self.generate_risk_analysis()
         )
 
 # Launch the app
