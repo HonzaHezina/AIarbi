@@ -29,37 +29,44 @@ class ArbitrageDashboard:
             status = self.arbitrage_system.get_system_status()
             data_status = status.get('data_engine_status', {})
             
-            status_text = "### 📊 System Status\n\n"
+            status_text = "### 📊 System Health Monitor\n\n"
+            status_text += "*Real-time status of all components*\n\n"
             
             # AI Model Status
             ai_loaded = status.get('ai_model_loaded', False)
             ai_icon = "✅" if ai_loaded else "⚠️"
-            status_text += f"- **AI Model**: {ai_icon} {'Loaded' if ai_loaded else 'Not Loaded'}\n"
+            ai_status = 'Ready' if ai_loaded else 'Fallback Mode (Rule-based)'
+            status_text += f"🤖 **AI Model**: {ai_icon} {ai_status}\n\n"
             
             # Data Engine Status
             cex_count = data_status.get('cex_exchanges', 0)
             dex_count = data_status.get('dex_protocols', 0)
             web3_connected = data_status.get('web3_connected', False)
             
-            status_text += f"- **CEX Exchanges**: {cex_count} connected\n"
-            status_text += f"- **DEX Protocols**: {dex_count} configured\n"
-            status_text += f"- **Web3**: {'✅ Connected' if web3_connected else '⚠️ Simulated mode'}\n"
+            status_text += f"📡 **Data Sources**:\n"
+            status_text += f"  • CEX Exchanges: {cex_count} connected\n"
+            status_text += f"  • DEX Protocols: {dex_count} configured\n"
+            status_text += f"  • Web3: {'✅ Live' if web3_connected else '⚠️ Simulated'}\n\n"
             
             # Last scan
             last_scan = status.get('last_scan')
             if last_scan:
                 time_diff = (datetime.now() - last_scan).seconds
-                status_text += f"- **Last Scan**: {time_diff}s ago\n"
+                if time_diff < 60:
+                    time_str = f"{time_diff}s ago"
+                else:
+                    time_str = f"{time_diff // 60}m ago"
+                status_text += f"⏱️ **Last Scan**: {time_str}\n\n"
             else:
-                status_text += f"- **Last Scan**: Never\n"
+                status_text += f"⏱️ **Last Scan**: Never (Start in Tab 1️⃣)\n\n"
             
             # Active strategies
             active = len(status.get('active_strategies', []))
-            status_text += f"- **Strategies**: {active}/5 loaded\n"
+            status_text += f"🎯 **Strategies**: {active}/5 loaded and ready\n"
             
             return status_text
         except Exception as e:
-            return f"### 📊 System Status\n\n⚠️ Error loading status: {str(e)}"
+            return f"### 📊 System Health Monitor\n\n⚠️ Error loading status: {str(e)}"
 
     def create_interface(self):
         with gr.Blocks(
@@ -317,9 +324,9 @@ class ArbitrageDashboard:
                         
                         opportunity_details_display = gr.Textbox(
                             lines=15,
-                            label="📊 Detailed Price Comparison",
+                            label="📊 Detailed Price Breakdown & Transparency",
                             interactive=False,
-                            value="Select an opportunity and click 'Show Details' to see price breakdown..."
+                            value="💡 How to use:\n1. Select an opportunity from dropdown above\n2. Click '🔍 Show Details' button\n3. See EXACT prices, fees, and calculations\n4. Verify everything is transparent!\n\n⬆️ Select an opportunity to begin..."
                         )
 
                     with gr.Column():
@@ -881,45 +888,47 @@ class ArbitrageDashboard:
         try:
             status = self.arbitrage_system.get_system_status()
             
-            diag = "=== CORE COMPONENTS ===\n\n"
+            diag = "=== CORE COMPONENTS ===\n"
+            diag += "(What's running in the system)\n\n"
             
             # AI Model
             ai_loaded = status.get('ai_model_loaded', False)
-            diag += f"✓ AI Model: {'Loaded and Ready' if ai_loaded else 'Not Loaded'}\n"
+            diag += f"🤖 AI Model: {'✓ Loaded and Ready' if ai_loaded else '⚠️ Fallback Mode (OK)'}\n"
             
             # Strategies
             strategies = status.get('active_strategies', [])
-            diag += f"✓ Strategies: {len(strategies)}/5 loaded\n"
+            diag += f"\n🎯 Strategies: {len(strategies)}/5 loaded\n"
             for s in strategies:
-                diag += f"  - {s}\n"
+                diag += f"   • {s}\n"
             
             # Graph Builder
-            diag += f"✓ Graph Builder: Initialized\n"
+            diag += f"\n🕸️ Graph Builder: ✓ Initialized\n"
             
             # Get graph statistics if available
             if hasattr(self.arbitrage_system, 'graph_builder') and self.arbitrage_system.graph_builder.graph:
                 graph_stats = self.arbitrage_system.graph_builder.get_graph_statistics()
-                diag += f"  - Nodes: {graph_stats.get('nodes', 0)}\n"
-                diag += f"  - Edges: {graph_stats.get('edges', 0)}\n"
-                diag += f"  - Tokens: {graph_stats.get('tokens', 0)}\n"
-                diag += f"  - Exchanges: {graph_stats.get('exchanges', 0)}\n"
+                diag += f"   • Nodes (trading pairs): {graph_stats.get('nodes', 0)}\n"
+                diag += f"   • Edges (possible trades): {graph_stats.get('edges', 0)}\n"
+                diag += f"   • Tokens tracked: {graph_stats.get('tokens', 0)}\n"
+                diag += f"   • Exchanges: {graph_stats.get('exchanges', 0)}\n"
             
             # Bellman-Ford Detector
-            diag += f"\n✓ Bellman-Ford Cycle Detector: Ready\n"
+            diag += f"\n🔍 Bellman-Ford Detector: ✓ Ready\n"
+            diag += f"   (Finds profitable cycles in price graph)\n"
             
             # Add Bellman-Ford configuration
             if hasattr(self.arbitrage_system, 'detector'):
                 detector = self.arbitrage_system.detector
-                diag += f"  - Max Cycle Length: {detector.max_cycle_length}\n"
-                diag += f"  - Min Profit Threshold: {-detector.min_profit_threshold * 100:.2f}%\n"
+                diag += f"   • Max cycle length: {detector.max_cycle_length} hops\n"
+                diag += f"   • Min profit filter: {-detector.min_profit_threshold * 100:.2f}%\n"
             
             # Data Engine
-            diag += f"\n✓ Data Engine: Active\n"
+            diag += f"\n📡 Data Engine: ✓ Active\n"
             
             # Cache
             cached = status.get('cached_opportunities', 0)
-            diag += f"\n=== CACHE ===\n"
-            diag += f"Cached Opportunities: {cached}\n"
+            diag += f"\n=== CACHE STATUS ===\n"
+            diag += f"💾 Cached Opportunities: {cached}\n"
             
             last_scan = status.get('last_scan')
             if last_scan:
@@ -938,34 +947,35 @@ class ArbitrageDashboard:
             status = self.arbitrage_system.get_system_status()
             data_status = status.get('data_engine_status', {})
             
-            diag = "=== DATA ENGINE ===\n\n"
+            diag = "=== DATA SOURCES ===\n"
+            diag += "(Where price data comes from)\n\n"
             
             # CEX Exchanges
             cex_count = data_status.get('cex_exchanges', 0)
-            diag += f"CEX Exchanges: {cex_count} configured\n"
-            diag += f"  - Binance ✓\n"
-            diag += f"  - Kraken ✓\n"
-            diag += f"  - Coinbase ✓\n"
-            diag += f"  - KuCoin ✓\n"
+            diag += f"📊 CEX Exchanges: {cex_count} configured\n"
+            diag += f"   • Binance ✓\n"
+            diag += f"   • Kraken ✓\n"
+            diag += f"   • Coinbase ✓\n"
+            diag += f"   • KuCoin ✓\n"
             
             # DEX Protocols
             dex_count = data_status.get('dex_protocols', 0)
-            diag += f"\nDEX Protocols: {dex_count} configured\n"
-            diag += f"  - Uniswap V3 ✓\n"
-            diag += f"  - SushiSwap ✓\n"
-            diag += f"  - PancakeSwap ✓\n"
+            diag += f"\n🌐 DEX Protocols: {dex_count} configured\n"
+            diag += f"   • Uniswap V3 ✓\n"
+            diag += f"   • SushiSwap ✓\n"
+            diag += f"   • PancakeSwap ✓\n"
             
             # Web3
             web3_connected = data_status.get('web3_connected', False)
-            diag += f"\nWeb3 Connection: "
+            diag += f"\n🔗 Web3 Connection: "
             if web3_connected:
-                diag += f"✓ Connected\n"
+                diag += f"✓ Live (real DEX data)\n"
             else:
-                diag += f"⚠️ Simulated (no real DEX data)\n"
+                diag += f"⚠️ Simulated (safe demo mode)\n"
             
             # Cache
             cached_data = data_status.get('cached_data_available', False)
-            diag += f"\nCached Data: {'✓ Available' if cached_data else '✗ None'}\n"
+            diag += f"\n💾 Cached Data: {'✓ Available' if cached_data else '✗ None yet'}\n"
             
             last_fetch = data_status.get('last_fetch')
             if last_fetch:
