@@ -221,8 +221,8 @@ class MainArbitrageSystem:
                 logger.debug(f" Debug: Updated amount: {current_amount}, Total fees: {total_fees}")
 
             # Calculate profit
-            profit_usd = current_amount - 1000
-            profit_pct = (profit_usd / 1000) * 100
+            profit_usd = current_amount - self.start_capital_usd
+            profit_pct = (profit_usd / self.start_capital_usd) * 100
 
             return {
                 'profit_pct': profit_pct,
