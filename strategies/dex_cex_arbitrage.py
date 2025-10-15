@@ -16,8 +16,12 @@ class DEXCEXArbitrage:
         self.ai = ai_model
         self.strategy_name = "dex_cex"
 
-        # DEX protocols we support
-        self.dex_protocols = ['uniswap_v3', 'sushiswap', 'pancakeswap', 'tinyman', 'pact']
+        # DEX protocols we support (extended with new protocols)
+        self.dex_protocols = [
+            'uniswap_v3', 'uniswap', 'sushiswap', 'pancakeswap',
+            'dydx', 'curve', 'balancer', 'oneinch', 'kyber',
+            'tinyman', 'pact'
+        ]
 
         # CEX exchanges we support  
         self.cex_exchanges = ['binance', 'kraken', 'coinbase', 'kucoin']
@@ -411,11 +415,19 @@ class DEXCEXArbitrage:
     async def estimate_dex_gas_cost(self, dex_protocol: str, token: str) -> float:
         """Estimate gas cost for DEX operations in USD"""
 
-        # Base gas estimates (in USD)
+        # Base gas estimates (in USD) - extended with new protocols
         base_gas_costs = {
             'uniswap_v3': 15.0,    # $15 average
+            'uniswap': 15.0,       # $15 average
             'sushiswap': 12.0,     # $12 average  
             'pancakeswap': 0.5,    # $0.50 on BSC
+            'dydx': 10.0,          # $10 average (Layer 2)
+            'curve': 20.0,         # $20 average (complex math operations)
+            'balancer': 18.0,      # $18 average
+            'oneinch': 15.0,       # $15 average (aggregator)
+            'kyber': 12.0,         # $12 average
+            'tinyman': 0.001,      # $0.001 on Algorand
+            'pact': 0.001,         # $0.001 on Algorand
         }
 
         base_cost = base_gas_costs.get(dex_protocol, 10.0)
@@ -442,9 +454,12 @@ class DEXCEXArbitrage:
             # Base confidence from profit size
             base_confidence = min(1.0, max(0.1, (profit_ratio - 1) * 100))  # Convert to 0-1 scale
 
-            # Exchange reliability factors
+            # Exchange reliability factors (extended with new protocols)
             reliable_cex = ['binance', 'coinbase', 'kraken']
-            reliable_dex = ['uniswap_v3', 'sushiswap']
+            reliable_dex = [
+                'uniswap_v3', 'uniswap', 'sushiswap', 'pancakeswap',
+                'dydx', 'curve', 'balancer', 'oneinch', 'kyber'
+            ]
 
             reliability_score = 1.0
             if from_exchange.lower() in reliable_cex or from_exchange.lower() in reliable_dex:
