@@ -137,6 +137,18 @@ class CrossExchangeArbitrage:
             if sell_proceeds > buy_cost:  # Profitable
                 rate = sell_proceeds / buy_cost
 
+                # Additional validation: For same-token transfers between exchanges,
+                # the rate should be very close to 1.0 (allowing for fees and transfer costs).
+                # A rate far from 1.0 indicates bad price data.
+                # Maximum reasonable profit for cross-exchange: ~5% after all costs
+                # So rate should be between 0.8 and 1.1
+                if rate < 0.8 or rate > 1.1:
+                    logger.warning(
+                        "Skipping cross-exchange candidate with unrealistic same-token transfer rate token=%s from=%s to=%s rate=%s buy_cost=%s sell_proceeds=%s buy_price=%s sell_price=%s",
+                        token, from_exchange, to_exchange, rate, buy_cost, sell_proceeds, buy_price, sell_price
+                    )
+                    return
+
                 # Adjust weight with AI confidence and volatility risk
                 volatility_risk = self.calculate_volatility_risk(token, transfer_info['time_minutes'])
                 adjusted_rate = rate * (1 - volatility_risk) * ai_analysis['confidence']
