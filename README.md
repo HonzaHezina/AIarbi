@@ -105,19 +105,23 @@ All CEX exchanges are connected via CCXT clients with REST API fallback:
 
 See `core/data_engine.py` for implementation and `utils/config.py` for configuration.
 
-### Decentralized Protocols (DEX) - 3 Protocols
+### Decentralized Protocols (DEX) - 5 Protocols
 
 | Protocol | Blockchain | Status | Web3 | Avg Gas Fee |
 |----------|-----------|--------|------|-------------|
 | 🦄 **Uniswap V3** | Ethereum | ✅ Working | ✅ | ~$15-50 |
 | 🍣 **SushiSwap** | Multi-chain | ✅ Working | ✅ | ~$10-30 |
 | 🥞 **PancakeSwap** | BSC | ✅ Working | ✅ | ~$0.5-2 |
+| 🔷 **Tinyman** | Algorand | ✅ Working | ✅ | ~$0.001 |
+| 🔶 **Pact** | Algorand | ✅ Working | ✅ | ~$0.001 |
 
 **Implementation details:**
 - Web3 on-chain RPC queries when available
 - Public RPC provider for demo (recommend private RPC for production)
 - Simulated/fallback data when Web3 unavailable (demo-safe)
 - Gas fee estimation included in arbitrage calculations
+- **Algorand DEX:** Tinyman and Pact support ultra-low transaction fees (~$0.001)
+- **Pera Wallet:** Compatible with Algorand DEX protocols for secure asset management
 - See `core/data_engine.py` for DEX integration
 
 ### Fallbacks, Simulation & Demo Mode
@@ -138,7 +142,7 @@ Visit the live application: [https://huggingface.co/spaces/HonzaH/AIarbi](https:
 
 1. **Launch the App** - Click the "AI Crypto Arbitrage System" interface
 2. **Select Strategies** - Choose which arbitrage strategies to enable (all 5 available)
-3. **Pick Trading Pairs** - Select cryptocurrencies to monitor (BTC, ETH, BNB, etc.)
+3. **Pick Trading Pairs** - Select cryptocurrencies to monitor (BTC, ETH, BNB, ALGO, etc.)
 4. **Set Thresholds** - Configure minimum profit requirements (0.1-3.0%)
 5. **Start Scanning** - Hit "🔍 Scan Opportunities" to begin
 6. **View Results** - See live opportunities, AI insights, and performance charts
@@ -326,9 +330,9 @@ If you run into missing-dependency errors, re-check the `requirements.txt` and i
 - ✅ 5 Trading Strategies (all verified and tested)
 - ✅ Gradio UI (3 tabs: Scanner, Execution, Analytics)
 
-**Supported Exchanges (13 total):**
+**Supported Exchanges (15 total):**
 - ✅ 8 CEX: Binance, Kraken, Coinbase, KuCoin, Bitfinex, Bybit, OKX, Gate.io
-- ✅ 3 DEX: Uniswap V3, SushiSwap, PancakeSwap
+- ✅ 5 DEX: Uniswap V3, SushiSwap, PancakeSwap, Tinyman (Algorand), Pact (Algorand)
 - ✅ 2 Aggregators: CoinGecko, CoinMarketCap
 
 **Testing:**

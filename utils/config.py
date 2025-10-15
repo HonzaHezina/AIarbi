@@ -194,6 +194,18 @@ DEX_CONFIG = {
         'fee': 0.0025,  # 0.25%
         'gas_cost_usd': 0.5,
         'network': 'bsc'
+    },
+    'tinyman': {
+        'name': 'Tinyman',
+        'fee': 0.0025,  # 0.25%
+        'gas_cost_usd': 0.001,  # Very low fees on Algorand
+        'network': 'algorand'
+    },
+    'pact': {
+        'name': 'Pact',
+        'fee': 0.003,  # 0.3%
+        'gas_cost_usd': 0.001,  # Very low fees on Algorand
+        'network': 'algorand'
     }
 }
 
@@ -206,7 +218,8 @@ DEFAULT_SYMBOLS = [
     'SOL/USDT',
     'MATIC/USDT',
     'DOT/USDT',
-    'LINK/USDT'
+    'LINK/USDT',
+    'ALGO/USDT'
 ]
 
 # Risk Management Settings
