@@ -1,6 +1,6 @@
 # Fixes Summary - Profit Calculation and CheckboxGroup Issues
 
-## Date: 2025-10-15
+## Date: 2024-10-15
 
 ## Issues Fixed
 
@@ -99,8 +99,8 @@ All use the same 0.8-1.1 rate validation range.
 
 For same-token transfers, we expect:
 - **Ideal case**: rate = 1.0 (perfect 1:1 transfer)
-- **With typical fees**: rate ≈ 0.996-0.998 (0.2-0.4% fees)
-- **With high fees**: rate ≈ 0.99-0.995 (0.5-1.0% fees)
+- **With typical fees** (0.2-0.4%): rate ≈ 0.996-0.998 (slight loss)
+- **With high fees** (0.5-1.0%): rate ≈ 0.990-0.995 (higher loss)
 - **Maximum realistic profit**: rate ≈ 1.02-1.05 (2-5% arbitrage opportunity)
 
 We use 0.8-1.1 as conservative bounds:
