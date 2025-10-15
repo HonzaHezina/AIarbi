@@ -177,59 +177,138 @@ class MainArbitrageSystem:
 
         return opportunities
 
+    def get_token_usd_price(self, token: str, exchange: str, price_data: Dict) -> float:
+        """
+        Get the USD price of a token from price data.
+        Uses USDT or USDC pairs as proxy for USD value.
+        """
+        # Stablecoins are always $1
+        if token in ['USDT', 'USDC', 'DAI', 'BUSD']:
+            return 1.0
+        
+        # Try to find a USDT or USDC pair for this token
+        for stablecoin in ['USDT', 'USDC']:
+            pair = f"{token}/{stablecoin}"
+            
+            # Check CEX exchanges
+            for exchange_name, exchange_data in price_data.get('cex', {}).items():
+                if pair in exchange_data:
+                    # Use mid price (average of bid and ask)
+                    bid = exchange_data[pair].get('bid', 0)
+                    ask = exchange_data[pair].get('ask', 0)
+                    if bid > 0 and ask > 0:
+                        return (bid + ask) / 2
+            
+            # Check DEX protocols
+            for protocol_name, protocol_data in price_data.get('dex', {}).items():
+                if pair in protocol_data:
+                    bid = protocol_data[pair].get('bid', 0)
+                    ask = protocol_data[pair].get('ask', 0)
+                    if bid > 0 and ask > 0:
+                        return (bid + ask) / 2
+        
+        # Fallback: use rough estimates for common tokens
+        fallback_prices = {
+            'BTC': 50000, 'WBTC': 50000,
+            'ETH': 3000, 'WETH': 3000,
+            'BNB': 300, 'WBNB': 300,
+            'SOL': 100,
+            'LINK': 15,
+            'UNI': 10,
+            'AAVE': 100,
+        }
+        return fallback_prices.get(token, 100.0)  # Default to $100 if unknown
+
     async def calculate_cycle_profit(self, cycle: Dict, price_data: Dict) -> Dict:
         """
-        Calculate actual profit for a cycle considering all fees and slippage
+        Calculate actual profit for a cycle considering all fees and slippage.
+        
+        The key insight: We need to track TOKEN QUANTITIES, not USD values!
+        - Start with USD capital
+        - Convert to starting token quantity
+        - Track token quantity through the cycle
+        - Convert final token quantity back to USD
         """
         try:
             path = cycle.get('path', [])
             if len(path) < 2:
                 return {'profit_pct': 0, 'profit_usd': 0}
 
-            # Simulate execution through the cycle using configured start capital
-            current_amount = float(self.start_capital_usd)
-            total_fees = 0
+            # Extract starting token and exchange from first node (e.g., "BTC@binance")
+            start_node = path[0]
+            if '@' not in start_node:
+                logger.warning(f"Invalid start node format: {start_node}")
+                return {'profit_pct': 0, 'profit_usd': 0}
+            
+            start_token, start_exchange = start_node.split('@', 1)
+            
+            # Get USD price of starting token
+            start_token_usd_price = self.get_token_usd_price(start_token, start_exchange, price_data)
+            
+            # Convert starting USD capital to token quantity
+            current_token_amount = float(self.start_capital_usd) / start_token_usd_price
+            total_fees_usd = 0
+            
+            logger.debug(f"Starting with {current_token_amount:.8f} {start_token} (worth ${self.start_capital_usd})")
 
-            # Debugging: Log cycle path and initial amount
-            logger.debug(f" Debug: Cycle path: {path}")
-            logger.debug(f" Debug: Starting amount: {current_amount}")
-
+            # Track the current token through the cycle
             for i in range(len(path) - 1):
                 current_node = path[i]
                 next_node = path[i + 1]
+                
+                # Extract tokens from nodes
+                current_token = current_node.split('@')[0]
+                next_token = next_node.split('@')[0]
 
-                # Debugging: Log edge data
+                # Get edge data
                 edge_data = cycle.get('edge_data', {}).get(f"{current_node}->{next_node}", {})
-                logger.debug(f" Debug: Edge data for {current_node}->{next_node}: {edge_data}")
-
-                # Calculate conversion rate and fees
+                
+                # Get conversion rate and fees
                 conversion_rate = edge_data.get('rate', 1.0)
                 fee_pct = edge_data.get('fee', 0.001)
                 slippage = edge_data.get('estimated_slippage', 0.0005)
+                
+                logger.debug(f"Step {i+1}: {current_token} -> {next_token}")
+                logger.debug(f"  Amount before: {current_token_amount:.8f} {current_token}")
+                logger.debug(f"  Rate: {conversion_rate:.8f} {next_token}/{current_token}")
+                logger.debug(f"  Fee: {fee_pct:.4%}, Slippage: {slippage:.4%}")
 
-                # Debugging: Log conversion details
-                logger.debug(f" Debug: Conversion rate: {conversion_rate}, Fee: {fee_pct}, Slippage: {slippage}")
+                # Calculate fees in current token amount
+                fee_token_amount = current_token_amount * fee_pct
+                slippage_token_amount = current_token_amount * slippage
+                
+                # Calculate USD value of fees
+                current_token_usd_price = self.get_token_usd_price(current_token, current_node.split('@')[1], price_data)
+                total_fees_usd += (fee_token_amount + slippage_token_amount) * current_token_usd_price
 
-                # Apply conversion
-                fee_amount = current_amount * fee_pct
-                slippage_amount = current_amount * slippage
+                # Apply conversion: current_token_amount * rate gives next_token_amount
+                # Then subtract fees
+                current_token_amount = current_token_amount * conversion_rate * (1 - fee_pct - slippage)
+                
+                logger.debug(f"  Amount after: {current_token_amount:.8f} {next_token}")
 
-                current_amount = current_amount * conversion_rate * (1 - fee_pct - slippage)
-                total_fees += fee_amount + slippage_amount
-
-                # Debugging: Log updated amount and fees
-                logger.debug(f" Debug: Updated amount: {current_amount}, Total fees: {total_fees}")
+            # Get final token value in USD
+            final_node = path[-1]
+            final_token, final_exchange = final_node.split('@', 1)
+            final_token_usd_price = self.get_token_usd_price(final_token, final_exchange, price_data)
+            final_usd_value = current_token_amount * final_token_usd_price
+            
+            logger.debug(f"Final: {current_token_amount:.8f} {final_token} = ${final_usd_value:.2f}")
 
             # Calculate profit
-            profit_usd = current_amount - self.start_capital_usd
+            profit_usd = final_usd_value - self.start_capital_usd
             profit_pct = (profit_usd / self.start_capital_usd) * 100
 
             return {
                 'profit_pct': profit_pct,
                 'profit_usd': profit_usd,
-                'total_fees': total_fees,
-                'final_amount': current_amount,
-                'required_capital': self.start_capital_usd
+                'total_fees': total_fees_usd,
+                'final_amount': final_usd_value,
+                'required_capital': self.start_capital_usd,
+                'start_token': start_token,
+                'start_token_amount': self.start_capital_usd / start_token_usd_price,
+                'final_token': final_token,
+                'final_token_amount': current_token_amount
             }
 
         except Exception as e:
