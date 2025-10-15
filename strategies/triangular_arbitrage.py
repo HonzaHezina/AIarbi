@@ -137,23 +137,37 @@ class TriangularArbitrage:
         and need to track which action to use for edge weight calculation.
         """
 
-        # For each edge, determine the action needed based on pair orientation
-        # Action 'sell' means we're selling the base of the pair
-        # Action 'buy' means we need to invert (we're buying the base with the quote)
+        # For each edge in the triangle, determine the correct action:
+        # - 'sell' = selling the base currency of the pair (use bid price)
+        # - 'buy' = buying the base currency of the pair (use ask price, then invert)
+        #
+        # For a triangular path A → B → C → A:
+        # - Edge A→B: Want to convert A to B
+        #   If pair is A/B: we sell A (action='sell', rate = bid)
+        #   If pair is B/A: we buy A in reverse = sell B (action='buy', rate = 1/ask)
+        # - Edge B→C: Want to convert B to C
+        #   If pair is B/C: we sell B (action='sell', rate = bid)
+        #   If pair is C/B: we buy B in reverse = sell C (action='buy', rate = 1/ask)
+        # - Edge C→A: Want to convert C to A
+        #   If pair is C/A: we sell C (action='sell', rate = bid)
+        #   If pair is A/C: we buy C in reverse = sell A (action='buy', rate = 1/ask)
+        #
+        # IMPORTANT: All edges should use 'sell' if the pair orientation matches
+        # the desired conversion direction!
         
         triangle_configs = [
-            # Direct pairs: A/B, B/C, C/A - all base currencies align with path direction
+            # Direct pairs: A/B, B/C, C/A - all aligned with conversion direction
             {'pair1': pair1, 'pair2': pair2, 'pair3': pair3, 
-             'action1': 'sell', 'action2': 'sell', 'action3': 'buy'},
-            # Mixed: B/A, B/C, A/C
+             'action1': 'sell', 'action2': 'sell', 'action3': 'sell'},
+            # Mixed: B/A (inverted), B/C, A/C (inverted)
             {'pair1': pair1_alt, 'pair2': pair2, 'pair3': pair3_alt,
-             'action1': 'buy', 'action2': 'sell', 'action3': 'sell'},
-            # Mixed: A/B, C/B, A/C  
+             'action1': 'buy', 'action2': 'sell', 'action3': 'buy'},
+            # Mixed: A/B, C/B (inverted), A/C (inverted)  
             {'pair1': pair1, 'pair2': pair2_alt, 'pair3': pair3_alt,
-             'action1': 'sell', 'action2': 'buy', 'action3': 'sell'},
-            # Mixed: B/A, C/B, C/A
+             'action1': 'sell', 'action2': 'buy', 'action3': 'buy'},
+            # Mixed: B/A (inverted), C/B (inverted), C/A
             {'pair1': pair1_alt, 'pair2': pair2_alt, 'pair3': pair3,
-             'action1': 'buy', 'action2': 'buy', 'action3': 'buy'},
+             'action1': 'buy', 'action2': 'buy', 'action3': 'sell'},
         ]
 
         for config in triangle_configs:
