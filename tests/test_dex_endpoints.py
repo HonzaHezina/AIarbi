@@ -121,3 +121,42 @@ def test_dex_key_data_fields():
         # Verify all key_data entries are strings
         for data in key_data:
             assert isinstance(data, str), f"{name} key_data must contain strings"
+
+def test_get_dex_endpoint():
+    """Test get_dex_endpoint helper function"""
+    # Test production endpoint
+    uniswap_prod = config.get_dex_endpoint('uniswap', testnet=False)
+    assert uniswap_prod is not None
+    assert uniswap_prod['active_url'] == uniswap_prod['base_url']
+    assert 'name' in uniswap_prod
+    
+    # Test testnet endpoint
+    uniswap_test = config.get_dex_endpoint('uniswap', testnet=True)
+    assert uniswap_test is not None
+    assert uniswap_test['active_url'] == uniswap_test['testnet_url']
+    
+    # Test invalid protocol
+    invalid = config.get_dex_endpoint('invalid_protocol')
+    assert invalid is None
+
+def test_get_dex_rate_limit():
+    """Test get_dex_rate_limit helper function"""
+    # Test protocol with rate limit per day
+    limit, period = config.get_dex_rate_limit('uniswap')
+    assert limit == 10000
+    assert period == 'day'
+    
+    # Test protocol with rate limit per hour
+    limit, period = config.get_dex_rate_limit('pancakeswap')
+    assert limit == 5000
+    assert period == 'hour'
+    
+    # Test protocol with rate limit per second
+    limit, period = config.get_dex_rate_limit('dydx')
+    assert limit == 50
+    assert period == 'second'
+    
+    # Test invalid protocol
+    limit, period = config.get_dex_rate_limit('invalid_protocol')
+    assert limit is None
+    assert period is None

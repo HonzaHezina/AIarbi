@@ -456,6 +456,52 @@ def get_supported_dex_protocols() -> list:
     """Get list of supported DEX protocols"""
     return list(DEX_CONFIG.keys())
 
+def get_dex_endpoint(protocol: str, testnet: bool = False) -> dict:
+    """Get DEX endpoint configuration for a specific protocol
+    
+    Args:
+        protocol: Name of the DEX protocol (e.g., 'uniswap', 'sushiswap')
+        testnet: If True, return testnet URL, otherwise production URL
+        
+    Returns:
+        Dictionary with endpoint configuration or None if not found
+    """
+    if protocol not in DEX_ENDPOINTS:
+        return None
+    
+    endpoint = DEX_ENDPOINTS[protocol].copy()
+    if testnet:
+        endpoint['active_url'] = endpoint.get('testnet_url')
+        endpoint['active_websocket_url'] = endpoint.get('testnet_websocket_url')
+    else:
+        endpoint['active_url'] = endpoint.get('base_url')
+        endpoint['active_websocket_url'] = endpoint.get('websocket_url')
+    
+    return endpoint
+
+def get_dex_rate_limit(protocol: str) -> tuple:
+    """Get rate limit for a DEX protocol
+    
+    Returns:
+        Tuple of (limit_value, time_period) e.g., (10000, 'day')
+    """
+    if protocol not in DEX_ENDPOINTS:
+        return (None, None)
+    
+    endpoint = DEX_ENDPOINTS[protocol]
+    
+    # Check which rate limit field exists
+    if 'rate_limit_per_day' in endpoint:
+        return (endpoint['rate_limit_per_day'], 'day')
+    elif 'rate_limit_per_hour' in endpoint:
+        return (endpoint['rate_limit_per_hour'], 'hour')
+    elif 'rate_limit_per_minute' in endpoint:
+        return (endpoint['rate_limit_per_minute'], 'minute')
+    elif 'rate_limit_per_second' in endpoint:
+        return (endpoint['rate_limit_per_second'], 'second')
+    
+    return (None, None)
+
 def validate_config():
     """Validate configuration settings"""
     errors = []
