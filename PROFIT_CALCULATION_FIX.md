@@ -36,7 +36,8 @@ This treated `current_amount` as both:
 - Start with: $1000 USD
 - First trade: LINK->USDC with rate 299.32 (meaning 1 LINK = 299.32 USDC)
 - OLD CODE: $1000 * 299.32 = $299,320 ❌
-  - This treated $1000 as if it were 1000 LINK tokens!
+  - **The Problem**: This treated $1000 USD as if it were 1000 LINK tokens!
+  - **What should happen**: $1000 / $299.32 per LINK = 3.34 LINK, then 3.34 LINK * 299.32 = $1000 USDC ✓
 
 ## The Fix
 
@@ -57,8 +58,11 @@ Rewrote `calculate_cycle_profit()` to:
 4. Convert final token quantity back to USD
 
 ```python
-# Convert USD to starting token
+# Convert USD to starting token (with fallback handling)
 start_token_usd_price = self.get_token_usd_price(start_token, start_exchange, price_data)
+if start_token_usd_price <= 0:
+    logger.error(f"Invalid token price for {start_token}")
+    return {'profit_pct': 0, 'profit_usd': 0}
 current_token_amount = self.start_capital_usd / start_token_usd_price
 
 # Track through cycle
@@ -173,7 +177,12 @@ While this fix resolves the critical bug, consider:
 1. Add more explicit unit types (e.g., typed values for Token vs USD)
 2. Add validation to catch similar bugs early
 3. Add more comprehensive logging of each step
-4. Consider using decimal.Decimal for financial calculations
+4. **Consider using `decimal.Decimal` for financial calculations**
+   - Important for avoiding floating-point precision errors
+   - Standard practice in financial applications
+   - Python floats can accumulate rounding errors (e.g., 0.1 + 0.2 ≠ 0.3)
+   - Example: `Decimal('1000.00')` instead of `float(1000.0)`
+   - Prevents errors like "$999.9999999999" being displayed as profit
 
 ## Conclusion
 
