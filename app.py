@@ -772,14 +772,41 @@ class ArbitrageDashboard:
 
             strategy = parts[0]
             token = parts[1].split(" (")[0]
+            
+            # Extract profit percentage from dropdown selection format
+            # Format: "strategy - token (profit%)"
+            profit_pct_str = selected_opp.split("(")[1].split("%")[0] if "(" in selected_opp and "%" in selected_opp else None
+            
+            # Find the matching opportunity from cached data to get exact profit
+            selected_opportunity_data = None
+            opportunities = self.cached_opportunities
+            
+            for opp in opportunities:
+                dropdown_label = f"{opp['strategy']} - {opp['token']} ({opp['profit_pct']:.2f}%)"
+                if dropdown_label == selected_opp:
+                    selected_opportunity_data = opp
+                    break
 
             if demo_mode:
+                # Calculate simulated profit based on actual opportunity data
+                if selected_opportunity_data:
+                    profit_pct = selected_opportunity_data.get('profit_pct', 0)
+                    profit_usd = (amount * profit_pct) / 100
+                else:
+                    # Fallback if opportunity not found
+                    try:
+                        profit_pct = float(profit_pct_str) if profit_pct_str else 0.5
+                        profit_usd = (amount * profit_pct) / 100
+                    except:
+                        profit_pct = 0.5
+                        profit_usd = amount * 0.005
+                
                 # Simulate execution
                 result = {
                     'time': datetime.now().strftime("%H:%M:%S"),
                     'strategy': strategy,
                     'token': token,
-                    'profit': f"+{amount * 0.005:.2f} USDT",  # Simulated 0.5% profit
+                    'profit': f"+{profit_usd:.2f} USDT",
                     'status': 'SIMULATED '
                 }
 
@@ -793,7 +820,9 @@ class ArbitrageDashboard:
 
                 analysis = f" Simulated execution completed successfully!\n"
                 analysis += f"Strategy: {strategy}\n"
-                analysis += f"Token: {token}\n" 
+                analysis += f"Token: {token}\n"
+                analysis += f"Amount: {amount:.2f} USDT\n"
+                analysis += f"Expected Profit: {profit_pct:.2f}%\n"
                 analysis += f"Simulated Profit: {result['profit']}\n"
                 analysis += f" This was a DEMO execution - no real trades were made."
 
