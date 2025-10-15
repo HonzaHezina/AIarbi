@@ -125,15 +125,35 @@ class TriangularArbitrage:
 
     def find_valid_triangle(self, available_pairs: Dict, pair1: str, pair2: str, pair3: str,
                            pair1_alt: str, pair2_alt: str, pair3_alt: str) -> Optional[Dict]:
-        """Find a valid triangle configuration"""
+        """
+        Find a valid triangle configuration.
+        
+        For a triangular arbitrage path A → B → C → A:
+        - We want pair A/B (to convert A to B)
+        - We want pair B/C (to convert B to C)
+        - We want pair C/A (to convert C to A)
+        
+        If the exact pairs aren't available, we try their inverses (B/A, C/B, A/C)
+        and need to track which action to use for edge weight calculation.
+        """
 
+        # For each edge, determine the action needed based on pair orientation
+        # Action 'sell' means we're selling the base of the pair
+        # Action 'buy' means we need to invert (we're buying the base with the quote)
+        
         triangle_configs = [
-            # Direct pairs
-            {'pair1': pair1, 'pair2': pair2, 'pair3': pair3},
-            # Mixed orientations
-            {'pair1': pair1_alt, 'pair2': pair2, 'pair3': pair3_alt},
-            {'pair1': pair1, 'pair2': pair2_alt, 'pair3': pair3_alt},
-            {'pair1': pair1_alt, 'pair2': pair2_alt, 'pair3': pair3},
+            # Direct pairs: A/B, B/C, C/A - all base currencies align with path direction
+            {'pair1': pair1, 'pair2': pair2, 'pair3': pair3, 
+             'action1': 'sell', 'action2': 'sell', 'action3': 'buy'},
+            # Mixed: B/A, B/C, A/C
+            {'pair1': pair1_alt, 'pair2': pair2, 'pair3': pair3_alt,
+             'action1': 'buy', 'action2': 'sell', 'action3': 'sell'},
+            # Mixed: A/B, C/B, A/C  
+            {'pair1': pair1, 'pair2': pair2_alt, 'pair3': pair3_alt,
+             'action1': 'sell', 'action2': 'buy', 'action3': 'sell'},
+            # Mixed: B/A, C/B, C/A
+            {'pair1': pair1_alt, 'pair2': pair2_alt, 'pair3': pair3,
+             'action1': 'buy', 'action2': 'buy', 'action3': 'buy'},
         ]
 
         for config in triangle_configs:
@@ -146,7 +166,10 @@ class TriangularArbitrage:
                     'pair3': p3,
                     'price1': available_pairs[p1],
                     'price2': available_pairs[p2],
-                    'price3': available_pairs[p3]
+                    'price3': available_pairs[p3],
+                    'action1': config['action1'],
+                    'action2': config['action2'],
+                    'action3': config['action3']
                 }
 
         return None
@@ -184,10 +207,15 @@ class TriangularArbitrage:
 
             # Add cycle edges with weights
             edges_added = 0
+            
+            # Get the action for each edge (determined by find_valid_triangle)
+            action1 = triangle_data.get('action1', 'sell')
+            action2 = triangle_data.get('action2', 'sell')
+            action3 = triangle_data.get('action3', 'buy')
 
             # Edge 1: curr1_base -> curr1_quote (using pair1)
             rate1, weight1 = self.calculate_edge_weight(
-                triangle_data['price1'], 'sell', exchange_type
+                triangle_data['price1'], action1, exchange_type
             )
             if weight1 is not None:
                 graph.add_edge(node1, node2,
@@ -197,12 +225,13 @@ class TriangularArbitrage:
                              exchange=exchange_name,
                              pair=pair1,
                              step=1,
+                             action=action1,
                              triangle_id=f"{curr1_base}-{curr1_quote}-{curr2_quote}")
                 edges_added += 1
 
             # Edge 2: curr1_quote -> curr2_quote (using pair2)
             rate2, weight2 = self.calculate_edge_weight(
-                triangle_data['price2'], 'sell', exchange_type
+                triangle_data['price2'], action2, exchange_type
             )
             if weight2 is not None:
                 graph.add_edge(node2, node3,
@@ -212,12 +241,13 @@ class TriangularArbitrage:
                              exchange=exchange_name,
                              pair=pair2,
                              step=2,
+                             action=action2,
                              triangle_id=f"{curr1_base}-{curr1_quote}-{curr2_quote}")
                 edges_added += 1
 
             # Edge 3: curr2_quote -> curr1_base (using pair3)
             rate3, weight3 = self.calculate_edge_weight(
-                triangle_data['price3'], 'buy', exchange_type
+                triangle_data['price3'], action3, exchange_type
             )
             if weight3 is not None:
                 graph.add_edge(node3, node1,
@@ -227,6 +257,7 @@ class TriangularArbitrage:
                              exchange=exchange_name, 
                              pair=pair3,
                              step=3,
+                             action=action3,
                              triangle_id=f"{curr1_base}-{curr1_quote}-{curr2_quote}")
                 edges_added += 1
 
