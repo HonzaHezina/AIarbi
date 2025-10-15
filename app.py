@@ -1240,14 +1240,19 @@ class ArbitrageDashboard:
                 start_token = path[0].split('@')[0] if path and '@' in path[0] else 'UNKNOWN'
                 initial_usd = opp.get('required_capital', 1000)
                 
-                # Get starting token USD price (from profit analysis if available)
-                start_token_amount = opp.get('cycle_data', {}).get('start_token_amount', 1.0)
-                if start_token_amount == 1.0:
-                    # Fallback: estimate based on token
+                # Get starting token USD price from profit analysis
+                # This uses actual market data, not hardcoded prices
+                profit_data = opp.get('cycle_data', {})
+                start_token_amount = profit_data.get('start_token_amount', None)
+                
+                if start_token_amount is None:
+                    # Fallback: estimate based on token (only if profit analysis didn't provide it)
                     token_prices = {'BTC': 50000, 'WBTC': 50000, 'ETH': 3000, 'WETH': 3000, 
-                                   'BNB': 300, 'LINK': 15, 'USDT': 1, 'USDC': 1}
+                                   'BNB': 300, 'LINK': 15, 'USDT': 1, 'USDC': 1, 'DAI': 1, 'BUSD': 1}
                     start_token_price = token_prices.get(start_token, 100)
                     start_token_amount = initial_usd / start_token_price
+                    logger.warning(f"Using fallback price ${start_token_price} for {start_token}. "
+                                 "Consider updating get_token_usd_price() with actual market data.")
                 
                 current_token_amount = start_token_amount
                 initial_amount = initial_usd
@@ -1298,10 +1303,48 @@ class ArbitrageDashboard:
                             details += f"  📊 **Price Spread**: {spread_pct:.4f}% {spread_direction}\n"
                             details += f"     📖 Why profitable: Sell price is higher than buy price!\n\n"
                     
-                    # Show rate and fees with clear explanation
+                    # Show rate and fees with clear explanation  
                     rate = edge_info.get('rate', 1.0)
+                    pair_used = edge_info.get('pair', None)
+                    action = edge_info.get('action', None)
+                    original_rate = rate  # Store original for logging
+                    rate_was_corrected = False
+                    
+                    # Validate and potentially correct the rate based on pair orientation
+                    if pair_used and '/' in pair_used:
+                        pair_base, pair_quote = pair_used.split('/')
+                        expected_pair = f"{from_token}/{to_token}"
+                        inverted_pair = f"{to_token}/{from_token}"
+                        
+                        # If the pair is inverted and action doesn't match, rate might be wrong
+                        if pair_used == inverted_pair:
+                            # Pair is inverted (to_token/from_token instead of from_token/to_token)
+                            # Action should be 'buy' to invert it, but let's validate
+                            if action == 'sell':
+                                # This is problematic: selling to_token when we want from_token→to_token
+                                # The rate is likely wrong - it's quote_per_base when we need base_per_quote
+                                logger.warning(f"Rate inversion issue detected: pair={pair_used}, action={action} "
+                                             f"for conversion {from_token}→{to_token}. Attempting to fix.")
+                                rate = 1 / rate if rate > 0 else rate
+                                rate_was_corrected = True
+                    
+                    # Validate rate for obvious errors (after potential correction)
+                    if rate > 1000 or rate < 0.001:
+                        # Suspicious rate - might indicate inverted pair or wrong calculation
+                        logger.warning(f"Suspicious conversion rate: {rate:.6f} {to_token}/{from_token}. "
+                                     f"Edge: {edge_key}, Pair: {pair_used}, Action: {action}, Original: {original_rate:.6f}")
+                        details += f"  ⚠️ **WARNING**: Suspicious conversion rate detected!\n"
+                        details += f"     Pair used: {pair_used}, Action: {action}\n"
+                        if rate_was_corrected:
+                            details += f"     Original rate: {original_rate:.6f}, Corrected to: {rate:.6f}\n"
+                    
                     details += f"  📈 **Conversion Rate**: {rate:.6f} {to_token}/{from_token}\n"
-                    details += f"     📖 For every 1 {from_token}, you get {rate:.6f} {to_token}\n\n"
+                    details += f"     📖 For every 1 {from_token}, you get {rate:.6f} {to_token}\n"
+                    if pair_used:
+                        details += f"     📊 Market pair: {pair_used} (action: {action})\n"
+                    if rate_was_corrected:
+                        details += f"     ⚠️ Rate was auto-corrected from {original_rate:.6f}\n"
+                    details += "\n"
                     
                     # Show fees breakdown with DETAIL
                     total_fees = edge_info.get('total_fees', 0)
@@ -1322,6 +1365,7 @@ class ArbitrageDashboard:
                     # Calculate amount after this step (CORRECT calculation)
                     # Apply conversion: from_token * rate = to_token
                     # Then subtract fees
+                    # NOTE: Using potentially corrected rate from validation above
                     next_token_amount = current_token_amount * rate * (1 - total_fees)
                     
                     details += f"\n  ✅ **After this swap**: {next_token_amount:.8f} {to_token}\n"
@@ -1341,11 +1385,28 @@ class ArbitrageDashboard:
                 # Calculate final USD value
                 final_token = path[-1].split('@')[0] if path and '@' in path[-1] else 'UNKNOWN'
                 
-                # Get final token price
-                token_prices = {'BTC': 50000, 'WBTC': 50000, 'ETH': 3000, 'WETH': 3000, 
-                               'BNB': 300, 'LINK': 15, 'USDT': 1, 'USDC': 1}
-                final_token_price = token_prices.get(final_token, 100)
-                final_usd = current_token_amount * final_token_price
+                # Get final token price from profit analysis (uses actual market data)
+                final_token_amount_from_profit = profit_data.get('final_token_amount', None)
+                final_usd_from_profit = profit_data.get('final_amount', None)
+                
+                if final_usd_from_profit is not None and final_token_amount_from_profit is not None:
+                    # Use the calculation from profit analysis (more accurate)
+                    final_usd = final_usd_from_profit
+                    # Recalculate current_token_amount to match profit analysis
+                    # This ensures consistency between the display and actual profit calculation
+                    if abs(current_token_amount - final_token_amount_from_profit) / max(current_token_amount, final_token_amount_from_profit, 1) > 0.01:
+                        logger.warning(f"Token amount mismatch: display calculated {current_token_amount:.8f} {final_token}, "
+                                     f"but profit analysis shows {final_token_amount_from_profit:.8f}. "
+                                     f"Using profit analysis value for consistency.")
+                        current_token_amount = final_token_amount_from_profit
+                else:
+                    # Fallback: use hardcoded prices (less accurate)
+                    token_prices = {'BTC': 50000, 'WBTC': 50000, 'ETH': 3000, 'WETH': 3000, 
+                                   'BNB': 300, 'LINK': 15, 'USDT': 1, 'USDC': 1, 'DAI': 1, 'BUSD': 1}
+                    final_token_price = token_prices.get(final_token, 100)
+                    final_usd = current_token_amount * final_token_price
+                    logger.warning(f"Using fallback price ${final_token_price} for {final_token}. "
+                                 "This may not reflect actual market prices.")
                 
                 net_profit = final_usd - initial_amount
                 net_profit_pct = (net_profit / initial_amount) * 100

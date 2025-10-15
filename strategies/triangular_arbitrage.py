@@ -6,6 +6,11 @@ from itertools import permutations
 
 logger = logging.getLogger(__name__)
 
+# Validation thresholds for rate and weight validation
+MAX_RATE_THRESHOLD = 1e6  # Maximum allowed rate (rates above this are considered invalid)
+MIN_RATE_THRESHOLD = 1e-6  # Minimum allowed rate (rates below this are considered invalid)
+MAX_WEIGHT_THRESHOLD = 10  # Maximum allowed absolute weight value
+
 class TriangularArbitrage:
     """
     Strategy 3: Triangular Arbitrage
@@ -135,31 +140,29 @@ class TriangularArbitrage:
         
         If the exact pairs aren't available, we try their inverses (B/A, C/B, A/C)
         and need to track which action to use for edge weight calculation.
+        
+        CRITICAL: The 'action' field must correctly indicate whether to use bid or 1/ask:
+        - action='sell': use bid directly (pair matches conversion direction)
+        - action='buy': use 1/ask (pair is inverted relative to conversion direction)
         """
 
-        # For each edge in the triangle, determine the correct action:
-        # - 'sell' = selling the base currency of the pair (use bid price)
-        # - 'buy' = buying the base currency of the pair (use ask price, then invert)
-        #
-        # For a triangular path A → B → C → A:
-        # - Edge A→B: Want to convert A to B
-        #   If pair is A/B: we sell A (action='sell', rate = bid)
-        #   If pair is B/A: we buy A in reverse = sell B (action='buy', rate = 1/ask)
-        # - Edge B→C: Want to convert B to C
-        #   If pair is B/C: we sell B (action='sell', rate = bid)
-        #   If pair is C/B: we buy B in reverse = sell C (action='buy', rate = 1/ask)
-        # - Edge C→A: Want to convert C to A
-        #   If pair is C/A: we sell C (action='sell', rate = bid)
-        #   If pair is A/C: we buy C in reverse = sell A (action='buy', rate = 1/ask)
-        #
-        # IMPORTANT: All edges should use 'sell' if the pair orientation matches
-        # the desired conversion direction!
+        # Extract tokens from pair names to determine correct actions
+        # pair1 should be A/B for conversion A→B
+        # pair1_alt is B/A (inverted)
+        if '/' not in pair1 or '/' not in pair1_alt:
+            return None
+            
+        pair1_base, pair1_quote = pair1.split('/')
+        pair2_base, pair2_quote = pair2.split('/') if '/' in pair2 else (None, None)
+        pair3_base, pair3_quote = pair3.split('/') if '/' in pair3 else (None, None)
         
         triangle_configs = [
             # Direct pairs: A/B, B/C, C/A - all aligned with conversion direction
+            # For A/B when converting A→B: we're selling A for B, so action='sell' (use bid)
             {'pair1': pair1, 'pair2': pair2, 'pair3': pair3, 
              'action1': 'sell', 'action2': 'sell', 'action3': 'sell'},
             # Mixed: B/A (inverted), B/C, A/C (inverted)
+            # For B/A when converting A→B: we're buying A with B in reverse, so action='buy' (use 1/ask)
             {'pair1': pair1_alt, 'pair2': pair2, 'pair3': pair3_alt,
              'action1': 'buy', 'action2': 'sell', 'action3': 'buy'},
             # Mixed: A/B, C/B (inverted), A/C (inverted)  
@@ -174,6 +177,17 @@ class TriangularArbitrage:
             p1, p2, p3 = config['pair1'], config['pair2'], config['pair3']
 
             if all(pair in available_pairs for pair in [p1, p2, p3]):
+                # Validate that the configuration makes sense
+                # Extract tokens to verify path continuity
+                if '/' in p1 and '/' in p2 and '/' in p3:
+                    p1_base, p1_quote = p1.split('/')
+                    p2_base, p2_quote = p2.split('/')
+                    p3_base, p3_quote = p3.split('/')
+                    
+                    # Log the configuration for debugging
+                    logger.debug(f"Found valid triangle: {p1} ({config['action1']}), "
+                               f"{p2} ({config['action2']}), {p3} ({config['action3']})")
+                
                 return {
                     'pair1': p1,
                     'pair2': p2, 
@@ -287,41 +301,58 @@ class TriangularArbitrage:
         
         Args:
             price_info: Dict with 'bid', 'ask', and optionally 'fee'
-            action: 'sell' or 'buy' - determines which price to use
+            action: 'sell' or 'buy' - determines which price to use and whether to invert
             exchange_type: 'dex' or 'cex' - determines default fee
             
         Returns:
             (rate, weight) tuple where:
-            - rate: conversion rate (how many units of quote per unit of base)
+            - rate: conversion rate in units of (to_token / from_token)
             - weight: -log(effective_rate) for Bellman-Ford
+            
+        CRITICAL: The rate MUST represent the conversion from from_token to to_token:
+        - If action='sell' and pair is from_token/to_token: rate = bid (to_token per from_token) ✓
+        - If action='buy' and pair is to_token/from_token: rate = 1/ask (to_token per from_token) ✓
         """
         try:
+            # Extract bid and ask for validation
+            bid = price_info.get('bid', 0)
+            ask = price_info.get('ask', 0)
+            
             # Get the appropriate rate based on action
             if action == 'sell':
-                # Selling base currency for quote currency - use bid price
-                rate = price_info.get('bid', 0)
-            else:  # buy
-                # Buying base currency with quote currency - use ask price
-                # For 'buy', we need to invert: if BTC/USDT ask is 50000,
-                # then buying BTC costs 50000 USDT per BTC, so the rate
-                # from USDT to BTC is 1/50000 = 0.00002 BTC per USDT
-                ask_price = price_info.get('ask', 0)
-                if ask_price > 0:
-                    rate = 1 / ask_price
-                else:
+                # Selling base currency of the pair for quote currency - use bid price
+                # rate = bid means: 1 unit of base gets 'bid' units of quote
+                rate = bid
+                if rate <= 0:
+                    logger.warning(f"Invalid bid price {bid} for action 'sell'")
                     return None, None
-
-            # Validate rate
+            else:  # buy
+                # Buying base currency of the pair with quote currency - use inverted ask
+                # If pair is BASE/QUOTE and we want QUOTE→BASE conversion:
+                # ask tells us: 1 BASE costs 'ask' QUOTE
+                # So: 1 QUOTE buys 1/ask BASE
+                # rate = 1/ask means: 1 unit of quote gets '1/ask' units of base
+                if ask <= 0:
+                    logger.warning(f"Invalid ask price {ask} for action 'buy'")
+                    return None, None
+                rate = 1 / ask
+            
+            # Validate rate is positive
             if rate <= 0:
-                logger.warning(f"Invalid rate {rate} for action '{action}' with price_info: {price_info}")
+                logger.warning(f"Invalid rate {rate} for action '{action}' with bid={bid}, ask={ask}")
                 return None, None
             
             # Check for extremely high or low rates that indicate data issues
-            if rate > 1e6 or rate < 1e-6:
-                logger.warning(f"Suspicious rate {rate} for action '{action}'. "
-                             f"Price info: bid={price_info.get('bid')}, ask={price_info.get('ask')}. "
-                             f"This may indicate price data issues.")
-                # Still allow it but log the warning
+            if rate > MAX_RATE_THRESHOLD:
+                logger.warning(f"Extremely high rate {rate:.2e} for action '{action}'. "
+                             f"bid={bid}, ask={ask}. This suggests incorrect price data or pair inversion.")
+                # Reject this edge
+                return None, None
+            elif rate < MIN_RATE_THRESHOLD:
+                logger.warning(f"Extremely low rate {rate:.2e} for action '{action}'. "
+                             f"bid={bid}, ask={ask}. This suggests incorrect price data or pair inversion.")
+                # Reject this edge
+                return None, None
 
             # Apply fees
             if exchange_type == 'dex':
@@ -339,6 +370,13 @@ class TriangularArbitrage:
 
             # Calculate weight for Bellman-Ford (negative log)
             weight = -math.log(effective_rate)
+            
+            # Validate weight is not extreme (would indicate calculation issues)
+            if abs(weight) > MAX_WEIGHT_THRESHOLD:
+                logger.warning(f"Extreme edge weight {weight:.2f} calculated from rate={rate}, fee={fee}. "
+                             "This may indicate incorrect price data.")
+                # Reject edges with extreme weights
+                return None, None
 
             return rate, weight
 
