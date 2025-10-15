@@ -207,6 +207,16 @@ class WrappedTokensArbitrage:
 
             if sell_proceeds > buy_cost:
                 rate = sell_proceeds / buy_cost
+                
+                # Validation: Same wrapped token transfers should have rates close to 1.0
+                # Maximum reasonable difference: ~5% after all costs
+                if rate < 0.8 or rate > 1.1:
+                    logger.warning(
+                        "Skipping wrapped token transfer with unrealistic rate token=%s from=%s to=%s rate=%s buy_cost=%s sell_proceeds=%s",
+                        token, from_loc['name'], to_loc['name'], rate, buy_cost, sell_proceeds
+                    )
+                    return 0
+                
                 weight = -math.log(rate)
 
                 graph.add_edge(from_node, to_node,
@@ -311,6 +321,16 @@ class WrappedTokensArbitrage:
 
             if sell_proceeds > (buy_cost + wrap_cost_total):
                 rate = sell_proceeds / (buy_cost + wrap_cost_total)
+                
+                # Validation: Native<->Wrapped conversions should have rates close to 1.0
+                # Maximum reasonable difference: ~5% after all costs
+                if rate < 0.8 or rate > 1.1:
+                    logger.warning(
+                        "Skipping native->wrapped with unrealistic rate token=%s rate=%s buy_cost=%s sell_proceeds=%s native_price=%s wrapped_price=%s",
+                        native_loc['token'], rate, buy_cost, sell_proceeds, native_price, wrapped_price
+                    )
+                    return 0
+                
                 weight = -math.log(rate)
 
                 graph.add_edge(native_node, wrapped_node,
@@ -356,6 +376,16 @@ class WrappedTokensArbitrage:
 
             if sell_proceeds > (buy_cost + unwrap_cost_total):
                 rate = sell_proceeds / (buy_cost + unwrap_cost_total)
+                
+                # Validation: Native<->Wrapped conversions should have rates close to 1.0
+                # Maximum reasonable difference: ~5% after all costs
+                if rate < 0.8 or rate > 1.1:
+                    logger.warning(
+                        "Skipping wrapped->native with unrealistic rate token=%s rate=%s buy_cost=%s sell_proceeds=%s wrapped_price=%s native_price=%s",
+                        wrapped_loc['token'], rate, buy_cost, sell_proceeds, wrapped_price, native_price
+                    )
+                    return 0
+                
                 weight = -math.log(rate)
 
                 graph.add_edge(wrapped_node, native_node,
