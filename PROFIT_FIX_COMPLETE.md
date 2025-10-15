@@ -29,7 +29,11 @@ The arbitrage system was displaying extremely unrealistic profit percentages (11
 - The old formula just multiplied by 100, treating log-space values as if they were percentages
 
 **Example**:
-- If cycle_weight = -115.9 (extreme case, indicates other bugs)
+- If cycle_weight = -115.9 (extreme case, indicates other bugs such as:
+  - Incorrect price data from exchange APIs
+  - Wrong pair orientation causing double inversion
+  - Missing or incorrect fee calculations
+  - Stale or cached price data being used)
 - Old calculation: -(-115.9) * 100 = **11590%** ❌
 - Correct calculation: (exp(115.9) - 1) * 100 = capped at **100%** due to suspicious weight ✓
 
@@ -66,8 +70,10 @@ Using pairs: BTC/ETH, ETH/USDT, USDT/BTC
 Edge 3: USDT → BTC using pair "USDT/BTC"
 - Pair says: 1 USDT = 0.00002 BTC
 - We have USDT, want BTC
-- OLD CODE: action='buy', so rate = 1/0.00002 = 50000 ❌
-- Should be: action='sell', so rate = 0.00002 ✓
+- Since we're converting the base currency (USDT) to the quote currency (BTC),
+  we are "selling" USDT to get BTC
+- OLD CODE: action='buy', so rate = 1/0.00002 = 50000 ❌ (incorrect inversion)
+- Should be: action='sell', so rate = 0.00002 ✓ (use bid price directly)
 ```
 
 **The Fix**:
@@ -222,9 +228,14 @@ The system now displays profits in the expected range of 0.5% - 5% for real arbi
 
 ### Future Improvements
 
-1. **Use Decimal for Financial Calculations**
-   - Python floats can accumulate rounding errors
-   - Consider using `decimal.Decimal` for precision-critical calculations
+1. **Use Decimal for Financial Calculations** (RECOMMENDED for production)
+   - Python floats can accumulate rounding errors over multiple operations
+   - **Critical for**: Multi-step arbitrage calculations, high-frequency trading
+   - **Optional for**: Simple two-step arbitrage with profit > 1%
+   - Using `decimal.Decimal` ensures: 0.1 + 0.2 = 0.3 (not 0.30000000000000004)
+   - Impact on profit margins: Floating-point errors can compound, turning a 0.5% profit
+     into a 0.45% profit or causing false positives for marginal opportunities
+   - Implementation: Replace `float()` with `Decimal()` in profit calculation functions
 
 2. **Add Unit Tests**
    - Test various cycle configurations
@@ -238,7 +249,14 @@ The system now displays profits in the expected range of 0.5% - 5% for real arbi
 
 ### Known Limitations
 
-- Profit estimates assume instant execution (no slippage beyond configured amounts)
-- Does not account for order book depth
-- Gas costs are estimated and may vary
-- Market conditions can change during execution
+- **Slippage**: Profit estimates include a default slippage estimate (0.05% for CEX, 0.3% for DEX)
+  configured in `core/main_arbitrage_system.py` line 269. Actual slippage depends on:
+  - Order book depth (not currently analyzed)
+  - Trade size relative to liquidity
+  - Market volatility at time of execution
+- **Gas costs**: Estimated based on average network conditions. Actual costs can vary 2-5x
+  during network congestion (DEX only)
+- **Execution timing**: Assumes instant execution. Multi-step arbitrage with cross-exchange
+  transfers can take 1-30 minutes, during which prices may move
+- **Market conditions**: Prices can change between detection and execution, especially
+  for opportunities with < 1% profit margin
