@@ -1303,19 +1303,48 @@ class ArbitrageDashboard:
                             details += f"  📊 **Price Spread**: {spread_pct:.4f}% {spread_direction}\n"
                             details += f"     📖 Why profitable: Sell price is higher than buy price!\n\n"
                     
-                    # Show rate and fees with clear explanation
+                    # Show rate and fees with clear explanation  
                     rate = edge_info.get('rate', 1.0)
+                    pair_used = edge_info.get('pair', None)
+                    action = edge_info.get('action', None)
+                    original_rate = rate  # Store original for logging
+                    rate_was_corrected = False
                     
-                    # Validate rate for obvious errors
+                    # Validate and potentially correct the rate based on pair orientation
+                    if pair_used and '/' in pair_used:
+                        pair_base, pair_quote = pair_used.split('/')
+                        expected_pair = f"{from_token}/{to_token}"
+                        inverted_pair = f"{to_token}/{from_token}"
+                        
+                        # If the pair is inverted and action doesn't match, rate might be wrong
+                        if pair_used == inverted_pair:
+                            # Pair is inverted (to_token/from_token instead of from_token/to_token)
+                            # Action should be 'buy' to invert it, but let's validate
+                            if action == 'sell':
+                                # This is problematic: selling to_token when we want from_token→to_token
+                                # The rate is likely wrong - it's quote_per_base when we need base_per_quote
+                                logger.warning(f"Rate inversion issue detected: pair={pair_used}, action={action} "
+                                             f"for conversion {from_token}→{to_token}. Attempting to fix.")
+                                rate = 1 / rate if rate > 0 else rate
+                                rate_was_corrected = True
+                    
+                    # Validate rate for obvious errors (after potential correction)
                     if rate > 1000 or rate < 0.001:
                         # Suspicious rate - might indicate inverted pair or wrong calculation
-                        logger.warning(f"Suspicious conversion rate detected: {rate:.6f} {to_token}/{from_token}. "
-                                     f"This might indicate incorrect edge calculation. "
-                                     f"Edge key: {edge_key}, Pair: {edge_info.get('pair', 'unknown')}")
+                        logger.warning(f"Suspicious conversion rate: {rate:.6f} {to_token}/{from_token}. "
+                                     f"Edge: {edge_key}, Pair: {pair_used}, Action: {action}, Original: {original_rate:.6f}")
                         details += f"  ⚠️ **WARNING**: Suspicious conversion rate detected!\n"
+                        details += f"     Pair used: {pair_used}, Action: {action}\n"
+                        if rate_was_corrected:
+                            details += f"     Original rate: {original_rate:.6f}, Corrected to: {rate:.6f}\n"
                     
                     details += f"  📈 **Conversion Rate**: {rate:.6f} {to_token}/{from_token}\n"
-                    details += f"     📖 For every 1 {from_token}, you get {rate:.6f} {to_token}\n\n"
+                    details += f"     📖 For every 1 {from_token}, you get {rate:.6f} {to_token}\n"
+                    if pair_used:
+                        details += f"     📊 Market pair: {pair_used} (action: {action})\n"
+                    if rate_was_corrected:
+                        details += f"     ⚠️ Rate was auto-corrected from {original_rate:.6f}\n"
+                    details += "\n"
                     
                     # Show fees breakdown with DETAIL
                     total_fees = edge_info.get('total_fees', 0)
@@ -1336,6 +1365,7 @@ class ArbitrageDashboard:
                     # Calculate amount after this step (CORRECT calculation)
                     # Apply conversion: from_token * rate = to_token
                     # Then subtract fees
+                    # NOTE: Using potentially corrected rate from validation above
                     next_token_amount = current_token_amount * rate * (1 - total_fees)
                     
                     details += f"\n  ✅ **After this swap**: {next_token_amount:.8f} {to_token}\n"

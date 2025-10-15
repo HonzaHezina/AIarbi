@@ -268,6 +268,28 @@ class MainArbitrageSystem:
                 fee_pct = edge_data.get('fee', 0.001)
                 slippage = edge_data.get('estimated_slippage', 0.0005)
                 
+                # Validate and potentially correct conversion rate
+                # Check if rate matches the pair orientation
+                pair_used = edge_data.get('pair', None)
+                action = edge_data.get('action', None)
+                if pair_used and '/' in pair_used:
+                    pair_base, pair_quote = pair_used.split('/')
+                    expected_pair = f"{current_token}/{next_token}"
+                    inverted_pair = f"{next_token}/{current_token}"
+                    
+                    # Detect problematic rate inversions
+                    if pair_used == inverted_pair and action == 'sell':
+                        # Pair is inverted but action is 'sell' - this is problematic!
+                        # The rate represents quote_per_base but we need base_per_quote
+                        logger.warning(f"Rate inversion detected in profit calculation: "
+                                     f"pair={pair_used}, action={action} for {current_token}→{next_token}. "
+                                     f"Original rate: {conversion_rate:.8f}, inverting...")
+                        if conversion_rate > 0:
+                            conversion_rate = 1 / conversion_rate
+                        else:
+                            logger.error(f"Cannot invert zero rate! Setting to 1.0")
+                            conversion_rate = 1.0
+                
                 logger.debug(f"Step {i+1}: {current_token} -> {next_token}")
                 logger.debug(f"  Amount before: {current_token_amount:.8f} {current_token}")
                 logger.debug(f"  Rate: {conversion_rate:.8f} {next_token}/{current_token}")
