@@ -95,6 +95,11 @@ except Exception:
 
 logger = logging.getLogger(__name__)
 
+# Validation thresholds for rate and weight validation
+MAX_RATE_THRESHOLD = 1e6  # Maximum allowed rate (rates above this are considered invalid)
+MIN_RATE_THRESHOLD = 1e-6  # Minimum allowed rate (rates below this are considered invalid)
+MAX_WEIGHT_THRESHOLD = 10  # Maximum allowed absolute weight value
+
 class GraphBuilder:
     """
     Builds unified graph for Bellman-Ford arbitrage detection
@@ -208,7 +213,7 @@ class GraphBuilder:
                     # Base -> Quote (selling base for quote)
                     if bid > 0:
                         # Validate bid is reasonable (not extreme)
-                        if bid > 1e6 or bid < 1e-6:
+                        if bid > MAX_RATE_THRESHOLD or bid < MIN_RATE_THRESHOLD:
                             logger.warning(f"Extreme bid price {bid} for pair {pair} on {exchange_name}. Skipping edge.")
                             continue
                         
@@ -217,7 +222,7 @@ class GraphBuilder:
                             weight = -math.log(rate * (1 - cex_fee))
                             
                             # Validate weight is not extreme
-                            if abs(weight) > 10:
+                            if abs(weight) > MAX_WEIGHT_THRESHOLD:
                                 logger.warning(f"Extreme weight {weight:.2f} for pair {pair} on {exchange_name}. "
                                              f"bid={bid}, fee={cex_fee}. Skipping edge.")
                                 continue
@@ -240,7 +245,7 @@ class GraphBuilder:
                     # Quote -> Base (buying base with quote)
                     if ask > 0:
                         # Validate ask is reasonable
-                        if ask > 1e6 or ask < 1e-6:
+                        if ask > MAX_RATE_THRESHOLD or ask < MIN_RATE_THRESHOLD:
                             logger.warning(f"Extreme ask price {ask} for pair {pair} on {exchange_name}. Skipping edge.")
                             continue
                         
@@ -248,7 +253,7 @@ class GraphBuilder:
                         inv_rate = 1.0 / ask
                         
                         # Validate inverted rate
-                        if inv_rate > 1e6 or inv_rate < 1e-6:
+                        if inv_rate > MAX_RATE_THRESHOLD or inv_rate < MIN_RATE_THRESHOLD:
                             logger.warning(f"Extreme inverted rate {inv_rate} (1/{ask}) for pair {pair} on {exchange_name}. Skipping edge.")
                             continue
                         
@@ -256,7 +261,7 @@ class GraphBuilder:
                             weight = -math.log(inv_rate * (1 - cex_fee))
                             
                             # Validate weight is not extreme
-                            if abs(weight) > 10:
+                            if abs(weight) > MAX_WEIGHT_THRESHOLD:
                                 logger.warning(f"Extreme weight {weight:.2f} for pair {pair} on {exchange_name}. "
                                              f"ask={ask}, inv_rate={inv_rate}, fee={cex_fee}. Skipping edge.")
                                 continue
@@ -302,7 +307,7 @@ class GraphBuilder:
                     bid = pair_data.get('bid', 0)
                     if bid > 0:
                         # Validate bid is reasonable
-                        if bid > 1e6 or bid < 1e-6:
+                        if bid > MAX_RATE_THRESHOLD or bid < MIN_RATE_THRESHOLD:
                             logger.warning(f"Extreme DEX bid {bid} for {pair} on {protocol_name}. Skipping.")
                             continue
                         
@@ -310,7 +315,7 @@ class GraphBuilder:
                             weight = -math.log(bid * (1 - dex_fee))
                             
                             # Validate weight
-                            if abs(weight) > 10:
+                            if abs(weight) > MAX_WEIGHT_THRESHOLD:
                                 logger.warning(f"Extreme DEX weight {weight:.2f} for {pair}. Skipping.")
                                 continue
                             
@@ -334,14 +339,14 @@ class GraphBuilder:
                     ask = pair_data.get('ask', 0)
                     if ask > 0:
                         # Validate ask is reasonable
-                        if ask > 1e6 or ask < 1e-6:
+                        if ask > MAX_RATE_THRESHOLD or ask < MIN_RATE_THRESHOLD:
                             logger.warning(f"Extreme DEX ask {ask} for {pair} on {protocol_name}. Skipping.")
                             continue
                         
                         inv_rate = 1 / ask
                         
                         # Validate inverted rate
-                        if inv_rate > 1e6 or inv_rate < 1e-6:
+                        if inv_rate > MAX_RATE_THRESHOLD or inv_rate < MIN_RATE_THRESHOLD:
                             logger.warning(f"Extreme DEX inv_rate {inv_rate} for {pair}. Skipping.")
                             continue
                         
@@ -349,7 +354,7 @@ class GraphBuilder:
                             weight = -math.log(inv_rate * (1 - dex_fee))
                             
                             # Validate weight
-                            if abs(weight) > 10:
+                            if abs(weight) > MAX_WEIGHT_THRESHOLD:
                                 logger.warning(f"Extreme DEX weight {weight:.2f} for {pair}. Skipping.")
                                 continue
                             

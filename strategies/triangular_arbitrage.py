@@ -6,6 +6,11 @@ from itertools import permutations
 
 logger = logging.getLogger(__name__)
 
+# Validation thresholds for rate and weight validation
+MAX_RATE_THRESHOLD = 1e6  # Maximum allowed rate (rates above this are considered invalid)
+MIN_RATE_THRESHOLD = 1e-6  # Minimum allowed rate (rates below this are considered invalid)
+MAX_WEIGHT_THRESHOLD = 10  # Maximum allowed absolute weight value
+
 class TriangularArbitrage:
     """
     Strategy 3: Triangular Arbitrage
@@ -338,12 +343,12 @@ class TriangularArbitrage:
                 return None, None
             
             # Check for extremely high or low rates that indicate data issues
-            if rate > 1e6:
+            if rate > MAX_RATE_THRESHOLD:
                 logger.warning(f"Extremely high rate {rate:.2e} for action '{action}'. "
                              f"bid={bid}, ask={ask}. This suggests incorrect price data or pair inversion.")
                 # Reject this edge
                 return None, None
-            elif rate < 1e-6:
+            elif rate < MIN_RATE_THRESHOLD:
                 logger.warning(f"Extremely low rate {rate:.2e} for action '{action}'. "
                              f"bid={bid}, ask={ask}. This suggests incorrect price data or pair inversion.")
                 # Reject this edge
@@ -367,7 +372,7 @@ class TriangularArbitrage:
             weight = -math.log(effective_rate)
             
             # Validate weight is not extreme (would indicate calculation issues)
-            if abs(weight) > 10:
+            if abs(weight) > MAX_WEIGHT_THRESHOLD:
                 logger.warning(f"Extreme edge weight {weight:.2f} calculated from rate={rate}, fee={fee}. "
                              "This may indicate incorrect price data.")
                 # Reject edges with extreme weights
