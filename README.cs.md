@@ -342,8 +342,16 @@ Současná korelace: 0.45
 | 🦄 **Uniswap V3** | Ethereum | ✅ Funguje | ✅ | ~$15-50 |
 | 🍣 **SushiSwap** | Multi-chain | ✅ Funguje | ✅ | ~$10-30 |
 | 🥞 **PancakeSwap** | BSC | ✅ Funguje | ✅ | ~$0.5-2 |
-| 🔷 **Tinyman** | Algorand | ✅ Funguje | ✅ | ~$0.001 |
+| 📊 **Curve** | Ethereum | ✅ Funguje | ✅ | ~$20-40 |
+| ⚖️ **Balancer** | Ethereum | ✅ Funguje | ✅ | ~$18-35 |
+| 🔵 **dYdX** | Ethereum L2 | ✅ Funguje | ✅ | ~$10-20 |
+| 🔄 **1inch** | Multi-chain | ✅ Funguje | ✅ | ~$15-30 |
+| 🔷 **Kyber** | Ethereum | ✅ Funguje | ✅ | ~$12-25 |
+| 🌊 **Tinyman** | Algorand | ✅ Funguje | ✅ | ~$0.001 |
 | 🔶 **Pact** | Algorand | ✅ Funguje | ✅ | ~$0.001 |
+| 💎 **AlgoFi** | Algorand | ✅ Funguje | ✅ | ~$0.001 |
+| 🔺 **Algox** | Algorand | ✅ Funguje | ✅ | ~$0.001 |
+| 🔄 **Uniswap V2** | Ethereum | ✅ Funguje | ✅ | ~$15-40 |
 
 ### Data Agregátory - 2 služby
 
@@ -356,7 +364,7 @@ Současná korelace: 0.45
 - CCXT poskytuje unified API pro všechny CEX burzy
 - REST API fallback funguje, pokud CCXT selže
 - Web3 připojení používá public RPC (pro produkci doporučeno vlastní RPC)
-- **Algorand DEX:** Tinyman a Pact s ultra-nízkými poplatky (~$0.001)
+- **Algorand DEX:** 4 protokoly (Tinyman, Pact, AlgoFi, Algox) s ultra-nízkými poplatky (~$0.001)
 - **Pera Wallet:** Kompatibilní s Algorand DEX protokoly pro bezpečnou správu aktiv
 - Demo mode funguje i bez živých dat (simulované ceny)
 
@@ -381,6 +389,18 @@ Současná korelace: 0.45
    - Poplatek: 0.3%
    - Optimalizováno pro nízký slippage
    - Podporuje LP tokeny
+
+3. **AlgoFi** (https://algofi.org)
+   - DeFi platforma s AMM
+   - Poplatek: 0.25%
+   - Podporuje governance tokeny (ALGO/GOV)
+   - Integrace s lending a borrowing
+
+4. **Algox** (AlgoSwap)
+   - Komunitní AMM
+   - Poplatek: 0.3%
+   - Podpora ASA tokenů
+   - Vznikající protokol s růstovým potenciálem
 
 **Podporované Algorand tokeny:**
 - ALGO (nativní token)
