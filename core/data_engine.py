@@ -56,17 +56,55 @@ class DataEngine:
         except Exception:
             self.cex_endpoints = {}
 
-        # DEX protocols
+        # DEX protocols - extended with new protocols from config
         self.dex_protocols = {
             'uniswap_v3': {
                 'name': 'Uniswap V3',
                 'router': '0xE592427A0AEce92De3Edee1F18E0157C05861564',
                 'factory': '0x1F98431c8aD98523631AE4a59f267346ea31F984'
             },
+            'uniswap': {
+                'name': 'Uniswap V2',
+                'router': '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
+                'factory': '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
+            },
             'sushiswap': {
                 'name': 'SushiSwap',
                 'router': '0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F',
                 'factory': '0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac'
+            },
+            'pancakeswap': {
+                'name': 'PancakeSwap',
+                'router': '0x10ED43C718714eb63d5aA57B78B54704E256024E',
+                'factory': '0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73',
+                'network': 'bsc'
+            },
+            'dydx': {
+                'name': 'dYdX',
+                'network': 'ethereum',
+                'api_based': True  # Uses REST API instead of direct contract calls
+            },
+            'curve': {
+                'name': 'Curve',
+                'registry': '0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5',
+                'network': 'ethereum'
+            },
+            'balancer': {
+                'name': 'Balancer',
+                'vault': '0xBA12222222228d8Ba445958a75a0704d566BF2C8',
+                'network': 'ethereum'
+            },
+            'oneinch': {
+                'name': '1inch',
+                'router': '0x1111111254EEB25477B68fb85Ed929f73A960582',
+                'network': 'ethereum',
+                'api_based': True  # Aggregator uses REST API
+            },
+            'kyber': {
+                'name': 'Kyber',
+                'router': '0x6131B5fae19EA4f9D964eAc0408E4408b66337b5',
+                'network': 'ethereum',
+                'api_based': True  # Uses REST API
             },
             'tinyman': {
                 'name': 'Tinyman',

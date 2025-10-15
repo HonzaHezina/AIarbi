@@ -175,37 +175,208 @@ for _name, _entry in EXCHANGE_ENDPOINTS.items():
     _env_key = f"EXCHANGE_ENDPOINT_{_name.upper()}_BASE_URL"
     if _os.getenv(_env_key):
         EXCHANGE_ENDPOINTS[_name]['base_url'] = _os.getenv(_env_key)
-# DEX Protocols
+
+# DEX Endpoints Configuration
+DEX_ENDPOINTS = {
+    'uniswap': {
+        'name': 'Uniswap',
+        'base_url': 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2',
+        'testnet_url': 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2?network=kovan',
+        'api_type': 'graphql',
+        'websocket_url': None,  # GraphQL uses same endpoint
+        'testnet_websocket_url': None,
+        'rate_limit_per_day': 10000,
+        'requires_api_key': False,
+        'network': 'ethereum',
+        'key_data': ['token_pairs', 'prices', 'liquidity'],
+        'docs': 'https://docs.uniswap.org/sdk/subgraph/subgraph-data'
+    },
+    'sushiswap': {
+        'name': 'SushiSwap',
+        'base_url': 'https://api.thegraph.com/subgraphs/name/sushiswap/exchange',
+        'testnet_url': 'https://api.thegraph.com/subgraphs/name/sushiswap/exchange?network=ropsten',
+        'api_type': 'graphql',
+        'websocket_url': None,  # GraphQL uses same endpoint
+        'testnet_websocket_url': None,
+        'rate_limit_per_day': 8000,
+        'requires_api_key': False,
+        'network': 'ethereum',
+        'key_data': ['volume', 'swaps', 'liquidity_pool'],
+        'docs': 'https://docs.sushi.com/docs/Developers/Subgraphs/Exchange'
+    },
+    'pancakeswap': {
+        'name': 'PancakeSwap',
+        'base_url': 'https://api.pancakeswap.info/api/v2/tokens',
+        'testnet_url': 'https://testnet-api.pancakeswap.finance/api/v2/tokens',
+        'api_type': 'rest',
+        'websocket_url': 'wss://bsc-ws-node.nariox.org:443',
+        'testnet_websocket_url': 'wss://data-seed-prebsc-1-s1.binance.org:8545',
+        'rate_limit_per_hour': 5000,
+        'requires_api_key': False,
+        'network': 'bsc',
+        'key_data': ['prices', 'trading_pairs', 'apy'],
+        'docs': 'https://docs.pancakeswap.finance/developers/api'
+    },
+    'dydx': {
+        'name': 'dYdX',
+        'base_url': 'https://api.dydx.exchange/v3/markets',
+        'testnet_url': 'https://api.stage.dydx.exchange/v3/markets',
+        'api_type': 'rest',
+        'websocket_url': 'wss://api.dydx.exchange/v3/ws',
+        'testnet_websocket_url': 'wss://api.stage.dydx.exchange/v3/ws',
+        'rate_limit_per_second': 50,
+        'requires_api_key': True,
+        'auth_type': 'hmac',  # API key + HMAC signing
+        'network': 'ethereum',
+        'key_data': ['futures_prices', 'orders', 'orderbook'],
+        'docs': 'https://docs.dydx.exchange/'
+    },
+    'curve': {
+        'name': 'Curve',
+        'base_url': 'https://api.curve.finance/api/getPools',
+        'testnet_url': 'https://api.curve.fi/api/getPools?network=kovan',
+        'api_type': 'rest',
+        'websocket_url': None,  # REST only
+        'testnet_websocket_url': None,
+        'rate_limit_per_minute': 1000,
+        'requires_api_key': False,
+        'network': 'ethereum',
+        'key_data': ['pools', 'apy', 'token_data'],
+        'docs': 'https://curve.readthedocs.io/'
+    },
+    'balancer': {
+        'name': 'Balancer',
+        'base_url': 'https://api-v3.balancer.fi/graphql',
+        'testnet_url': 'https://api-v3.balancer.kovan.network/graphql',
+        'api_type': 'graphql',
+        'websocket_url': None,  # GraphQL uses same endpoint
+        'testnet_websocket_url': None,
+        'rate_limit_per_day': 5000,
+        'requires_api_key': False,
+        'network': 'ethereum',
+        'key_data': ['pools', 'prices', 'weighted_indices'],
+        'docs': 'https://docs.balancer.fi/'
+    },
+    'oneinch': {
+        'name': '1inch',
+        'base_url': 'https://api.1inch.io/v4.0/1/tokens',
+        'testnet_url': 'https://api.1inch.io/v4.0/1/tokens?network=ropsten',
+        'api_type': 'rest',
+        'quote_endpoint': 'https://api.1inch.io/v4.0/1/quote',
+        'testnet_quote_endpoint': 'https://api.1inch.io/v4.0/1/quote?network=ropsten',
+        'websocket_url': None,
+        'testnet_websocket_url': None,
+        'rate_limit_per_day': 1000,
+        'requires_api_key': False,
+        'network': 'ethereum',
+        'key_data': ['aggregated_prices', 'volumes'],
+        'docs': 'https://docs.1inch.io/'
+    },
+    'kyber': {
+        'name': 'Kyber',
+        'base_url': 'https://kyber.api.0x.org/swap/v1/quote',
+        'testnet_url': 'https://ropsten.api.0x.org/swap/v1/quote',
+        'api_type': 'rest',
+        'websocket_url': None,
+        'testnet_websocket_url': None,
+        'rate_limit_per_day': 5000,
+        'requires_api_key': False,
+        'network': 'ethereum',
+        'key_data': ['best_swap_price', 'liquidity'],
+        'docs': 'https://docs.kyberswap.com/'
+    }
+}
+
+# DEX Protocols (extended with new protocols)
 DEX_CONFIG = {
     'uniswap_v3': {
         'name': 'Uniswap V3',
         'fee': 0.003,  # 0.3%
         'gas_cost_usd': 15.0,
-        'network': 'ethereum'
+        'network': 'ethereum',
+        'rate_limit': 10000,  # per day
+        'reliable': True
+    },
+    'uniswap': {
+        'name': 'Uniswap V2',
+        'fee': 0.003,  # 0.3%
+        'gas_cost_usd': 15.0,
+        'network': 'ethereum',
+        'rate_limit': 10000,  # per day
+        'reliable': True
     },
     'sushiswap': {
         'name': 'SushiSwap',
         'fee': 0.003,  # 0.3%
         'gas_cost_usd': 12.0,
-        'network': 'ethereum'
+        'network': 'ethereum',
+        'rate_limit': 8000,  # per day
+        'reliable': True
     },
     'pancakeswap': {
         'name': 'PancakeSwap',
         'fee': 0.0025,  # 0.25%
         'gas_cost_usd': 0.5,
-        'network': 'bsc'
+        'network': 'bsc',
+        'rate_limit': 5000,  # per hour
+        'reliable': True
+    },
+    'dydx': {
+        'name': 'dYdX',
+        'fee': 0.0005,  # 0.05% maker, 0.02% taker (average)
+        'gas_cost_usd': 10.0,
+        'network': 'ethereum',
+        'rate_limit': 50,  # per second
+        'requires_api_key': True,
+        'reliable': True
+    },
+    'curve': {
+        'name': 'Curve',
+        'fee': 0.0004,  # 0.04% typical
+        'gas_cost_usd': 20.0,  # Higher due to complex math
+        'network': 'ethereum',
+        'rate_limit': 1000,  # per minute
+        'reliable': True
+    },
+    'balancer': {
+        'name': 'Balancer',
+        'fee': 0.001,  # 0.1% typical (varies by pool)
+        'gas_cost_usd': 18.0,
+        'network': 'ethereum',
+        'rate_limit': 5000,  # per day
+        'reliable': True
+    },
+    'oneinch': {
+        'name': '1inch',
+        'fee': 0.001,  # aggregated fee varies
+        'gas_cost_usd': 15.0,
+        'network': 'ethereum',
+        'rate_limit': 1000,  # per day
+        'reliable': True
+    },
+    'kyber': {
+        'name': 'Kyber',
+        'fee': 0.001,  # 0.1% typical
+        'gas_cost_usd': 12.0,
+        'network': 'ethereum',
+        'rate_limit': 5000,  # per day
+        'reliable': True
     },
     'tinyman': {
         'name': 'Tinyman',
         'fee': 0.0025,  # 0.25%
         'gas_cost_usd': 0.001,  # Very low fees on Algorand
-        'network': 'algorand'
+        'network': 'algorand',
+        'rate_limit': 10000,  # per day
+        'reliable': False
     },
     'pact': {
         'name': 'Pact',
         'fee': 0.003,  # 0.3%
         'gas_cost_usd': 0.001,  # Very low fees on Algorand
-        'network': 'algorand'
+        'network': 'algorand',
+        'rate_limit': 10000,  # per day
+        'reliable': False
     }
 }
 
