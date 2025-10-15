@@ -129,6 +129,20 @@ class DEXCEXArbitrage:
                         rate = sell_proceeds / buy_cost
                         profit_pct = (sell_proceeds - buy_cost) / buy_cost * 100 if buy_cost > 0 else 0.0
 
+                        # Additional validation: For same-token transfers between exchanges,
+                        # the rate should be very close to 1.0 (allowing for fees).
+                        # A rate far from 1.0 indicates bad price data.
+                        # Maximum reasonable profit for same-token transfer: ~5% after fees
+                        # So rate should be between 0.8 and 1.1
+                        if rate < 0.8 or rate > 1.1:
+                            logger.warning(
+                                "Skipping cex->dex candidate with unrealistic same-token transfer rate token=%s buy=%s sell=%s rate=%s profit_pct=%s buy_cost=%s sell_proceeds=%s cex_buy_price=%s dex_sell_price=%s source_cex_pair=%s source_dex_pair=%s",
+                                token, cex_exchange, dex_protocol, rate, profit_pct, buy_cost, sell_proceeds, cex_buy_price, dex_sell_price,
+                                self._get_price_origin(cex_price_info),
+                                self._get_price_origin(dex_price_info)
+                            )
+                            continue
+
                         # Reject obviously invalid/excessive rates
                         if not (0 < rate < 1e4) or abs(profit_pct) > 5000:
                             logger.warning(
@@ -238,6 +252,20 @@ class DEXCEXArbitrage:
                     else:
                         rate = sell_proceeds / buy_cost
                         profit_pct = (sell_proceeds - buy_cost) / buy_cost * 100 if buy_cost > 0 else 0.0
+
+                        # Additional validation: For same-token transfers between exchanges,
+                        # the rate should be very close to 1.0 (allowing for fees).
+                        # A rate far from 1.0 indicates bad price data.
+                        # Maximum reasonable profit for same-token transfer: ~5% after fees
+                        # So rate should be between 0.8 and 1.1
+                        if rate < 0.8 or rate > 1.1:
+                            logger.warning(
+                                "Skipping dex->cex candidate with unrealistic same-token transfer rate token=%s buy=%s sell=%s rate=%s profit_pct=%s buy_cost=%s sell_proceeds=%s dex_buy_price=%s cex_sell_price=%s source_dex_pair=%s source_cex_pair=%s",
+                                token, dex_protocol, cex_exchange, rate, profit_pct, buy_cost, sell_proceeds, dex_buy_price, cex_sell_price,
+                                self._get_price_origin(dex_price_info),
+                                self._get_price_origin(cex_price_info)
+                            )
+                            continue
 
                         # Reject obviously invalid/excessive rates
                         if not (0 < rate < 1e4) or abs(profit_pct) > 5000:

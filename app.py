@@ -579,6 +579,19 @@ class ArbitrageDashboard:
             self.scan_progress += "🎯 **WHAT THE SYSTEM IS DOING NOW**\n\n"
             logger.info("📊 Scan started")
             
+            # Handle case where Gradio passes component objects instead of values
+            # This happens when the function is called programmatically
+            if hasattr(strategies, 'value'):
+                strategies = strategies.value if strategies.value is not None else []
+            if hasattr(pairs, 'value'):
+                pairs = pairs.value if pairs.value is not None else []
+            
+            # Ensure we have lists
+            if not isinstance(strategies, (list, tuple)):
+                strategies = []
+            if not isinstance(pairs, (list, tuple)):
+                pairs = []
+            
             # Convert strategy names
             strategy_map = {
                 "DEX/CEX Arbitrage": "dex_cex",
