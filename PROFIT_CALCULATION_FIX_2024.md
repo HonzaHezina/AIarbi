@@ -90,9 +90,12 @@ Path: MATIC → USDT → BTC → MATIC
 Profit %: -0.300%
 Final amount: 0.99700300 MATIC
 
-Step 1: rate=0.500000, amount=0.49950000 USDT ✓
-Step 2: rate=0.000020, amount=0.00000998 BTC ✓
-Step 3: rate=100000, amount=0.99700300 MATIC ✓
+Step 1: rate=0.500000 (raw price), effective_amount=0.49950000 USDT after 0.1% fee ✓
+Step 2: rate=0.000020 (1/50000, inverted), effective_amount=0.00000998 BTC after fee ✓
+Step 3: rate=100000 (1/0.00001, inverted), effective_amount=0.99700300 MATIC after fee ✓
+
+Note: 'rate' shows the conversion rate used (may be inverted from pair price).
+The effective_amount includes the impact of fees (1 - 0.001 = 0.999 multiplier).
 ```
 
 ### Test Results
@@ -163,21 +166,23 @@ For triangular arbitrage, we need to track the actual token quantities through e
 Start: amount₀ of token A
 
 Step 1 (A → B):
-  - If selling A for B: amount₁ = amount₀ * bid_AB
-  - If buying A (pair is B/A): amount₁ = amount₀ / ask_BA
+  - If selling A for B: amount₁ = amount₀ * bid_AB * (1 - fee)
+  - If buying A (pair is B/A): amount₁ = amount₀ / ask_BA * (1 - fee)
 
 Step 2 (B → C):
-  - If selling B for C: amount₂ = amount₁ * bid_BC  
-  - If buying B (pair is C/B): amount₂ = amount₁ / ask_CB
+  - If selling B for C: amount₂ = amount₁ * bid_BC * (1 - fee)
+  - If buying B (pair is C/B): amount₂ = amount₁ / ask_CB * (1 - fee)
 
 Step 3 (C → A):
-  - If selling C for A: amount₃ = amount₂ * bid_CA
-  - If buying C (pair is A/C): amount₃ = amount₂ / ask_AC
+  - If selling C for A: amount₃ = amount₂ * bid_CA * (1 - fee)
+  - If buying C (pair is A/C): amount₃ = amount₂ / ask_AC * (1 - fee)
 
 Profit = (amount₃ - amount₀) / amount₀ * 100
 ```
 
 The key insight: **When using an inverted pair, we DIVIDE by the price instead of MULTIPLY**.
+
+Note: The fee (typically 0.1% for CEX, 0.3% for DEX) is applied after each conversion to account for trading costs.
 
 ## Conclusion
 
