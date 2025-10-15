@@ -207,36 +207,74 @@ class GraphBuilder:
 
                     # Base -> Quote (selling base for quote)
                     if bid > 0:
+                        # Validate bid is reasonable (not extreme)
+                        if bid > 1e6 or bid < 1e-6:
+                            logger.warning(f"Extreme bid price {bid} for pair {pair} on {exchange_name}. Skipping edge.")
+                            continue
+                        
                         rate = bid
-                        weight = -math.log(rate * (1 - cex_fee))
-                        logger.debug(
-                            "Adding CEX sell edge %s->%s bid=%s computed_weight=%s rate=%s",
-                            base_node, quote_node, bid, weight, rate
-                        )
-                        graph.add_edge(base_node, quote_node,
-                                     weight=weight,
-                                     rate=rate,
-                                     fee=cex_fee,
-                                     pair=pair,
-                                     exchange=exchange_name,
-                                     trade_type='sell')
+                        try:
+                            weight = -math.log(rate * (1 - cex_fee))
+                            
+                            # Validate weight is not extreme
+                            if abs(weight) > 10:
+                                logger.warning(f"Extreme weight {weight:.2f} for pair {pair} on {exchange_name}. "
+                                             f"bid={bid}, fee={cex_fee}. Skipping edge.")
+                                continue
+                            
+                            logger.debug(
+                                "Adding CEX sell edge %s->%s bid=%s computed_weight=%s rate=%s",
+                                base_node, quote_node, bid, weight, rate
+                            )
+                            graph.add_edge(base_node, quote_node,
+                                         weight=weight,
+                                         rate=rate,
+                                         fee=cex_fee,
+                                         pair=pair,
+                                         exchange=exchange_name,
+                                         trade_type='sell')
+                        except (ValueError, OverflowError) as e:
+                            logger.error(f"Error calculating weight for {pair}: {e}")
+                            continue
 
                     # Quote -> Base (buying base with quote)
                     if ask > 0:
+                        # Validate ask is reasonable
+                        if ask > 1e6 or ask < 1e-6:
+                            logger.warning(f"Extreme ask price {ask} for pair {pair} on {exchange_name}. Skipping edge.")
+                            continue
+                        
                         # Protect against division by zero; invert ask to get base per quote
                         inv_rate = 1.0 / ask
-                        weight = -math.log(inv_rate * (1 - cex_fee))
-                        logger.debug(
-                            "Adding CEX buy edge %s->%s ask=%s inv_rate=%s computed_weight=%s",
-                            quote_node, base_node, ask, inv_rate, weight
-                        )
-                        graph.add_edge(quote_node, base_node,
-                                     weight=weight,
-                                     rate=inv_rate,
-                                     fee=cex_fee,
-                                     pair=pair,
-                                     exchange=exchange_name,
-                                     trade_type='buy')
+                        
+                        # Validate inverted rate
+                        if inv_rate > 1e6 or inv_rate < 1e-6:
+                            logger.warning(f"Extreme inverted rate {inv_rate} (1/{ask}) for pair {pair} on {exchange_name}. Skipping edge.")
+                            continue
+                        
+                        try:
+                            weight = -math.log(inv_rate * (1 - cex_fee))
+                            
+                            # Validate weight is not extreme
+                            if abs(weight) > 10:
+                                logger.warning(f"Extreme weight {weight:.2f} for pair {pair} on {exchange_name}. "
+                                             f"ask={ask}, inv_rate={inv_rate}, fee={cex_fee}. Skipping edge.")
+                                continue
+                            
+                            logger.debug(
+                                "Adding CEX buy edge %s->%s ask=%s inv_rate=%s computed_weight=%s",
+                                quote_node, base_node, ask, inv_rate, weight
+                            )
+                            graph.add_edge(quote_node, base_node,
+                                         weight=weight,
+                                         rate=inv_rate,
+                                         fee=cex_fee,
+                                         pair=pair,
+                                         exchange=exchange_name,
+                                         trade_type='buy')
+                        except (ValueError, OverflowError) as e:
+                            logger.error(f"Error calculating weight for {pair}: {e}")
+                            continue
 
         # Add DEX trading pair edges
         for protocol_name, protocol_data in price_data.get('dex', {}).items():
@@ -261,37 +299,75 @@ class GraphBuilder:
                         logger.debug("DEX pair data available for %s@%s pair=%s", base_token, protocol_name, pair)
 
                     # Base -> Quote
-                    if pair_data['bid'] > 0:
-                        weight = -math.log(pair_data['bid'] * (1 - dex_fee))
-                        logger.debug(
-                            "Adding DEX sell edge %s->%s bid=%s fee=%s computed_weight=%s rate=%s",
-                            base_node, quote_node, pair_data['bid'], dex_fee, weight, pair_data['bid']
-                        )
-                        graph.add_edge(base_node, quote_node,
-                                     weight=weight,
-                                     rate=pair_data['bid'],
-                                     fee=dex_fee,
-                                     pair=pair,
-                                     exchange=protocol_name,
-                                     trade_type='sell',
-                                     liquidity=pair_data.get('liquidity', 0))
+                    bid = pair_data.get('bid', 0)
+                    if bid > 0:
+                        # Validate bid is reasonable
+                        if bid > 1e6 or bid < 1e-6:
+                            logger.warning(f"Extreme DEX bid {bid} for {pair} on {protocol_name}. Skipping.")
+                            continue
+                        
+                        try:
+                            weight = -math.log(bid * (1 - dex_fee))
+                            
+                            # Validate weight
+                            if abs(weight) > 10:
+                                logger.warning(f"Extreme DEX weight {weight:.2f} for {pair}. Skipping.")
+                                continue
+                            
+                            logger.debug(
+                                "Adding DEX sell edge %s->%s bid=%s fee=%s computed_weight=%s rate=%s",
+                                base_node, quote_node, bid, dex_fee, weight, bid
+                            )
+                            graph.add_edge(base_node, quote_node,
+                                         weight=weight,
+                                         rate=bid,
+                                         fee=dex_fee,
+                                         pair=pair,
+                                         exchange=protocol_name,
+                                         trade_type='sell',
+                                         liquidity=pair_data.get('liquidity', 0))
+                        except (ValueError, OverflowError) as e:
+                            logger.error(f"Error calculating DEX weight for {pair}: {e}")
+                            continue
 
                     # Quote -> Base
-                    if pair_data['ask'] > 0:
-                        inv_rate = 1 / pair_data['ask']
-                        weight = -math.log(inv_rate * (1 - dex_fee))
-                        logger.debug(
-                            "Adding DEX buy edge %s->%s ask=%s inv_rate=%s fee=%s computed_weight=%s",
-                            quote_node, base_node, pair_data['ask'], inv_rate, dex_fee, weight
-                        )
-                        graph.add_edge(quote_node, base_node,
-                                     weight=weight,
-                                     rate=inv_rate,
-                                     fee=dex_fee,
-                                     pair=pair,
-                                     exchange=protocol_name,
-                                     trade_type='buy',
-                                     liquidity=pair_data.get('liquidity', 0))
+                    ask = pair_data.get('ask', 0)
+                    if ask > 0:
+                        # Validate ask is reasonable
+                        if ask > 1e6 or ask < 1e-6:
+                            logger.warning(f"Extreme DEX ask {ask} for {pair} on {protocol_name}. Skipping.")
+                            continue
+                        
+                        inv_rate = 1 / ask
+                        
+                        # Validate inverted rate
+                        if inv_rate > 1e6 or inv_rate < 1e-6:
+                            logger.warning(f"Extreme DEX inv_rate {inv_rate} for {pair}. Skipping.")
+                            continue
+                        
+                        try:
+                            weight = -math.log(inv_rate * (1 - dex_fee))
+                            
+                            # Validate weight
+                            if abs(weight) > 10:
+                                logger.warning(f"Extreme DEX weight {weight:.2f} for {pair}. Skipping.")
+                                continue
+                            
+                            logger.debug(
+                                "Adding DEX buy edge %s->%s ask=%s inv_rate=%s fee=%s computed_weight=%s",
+                                quote_node, base_node, ask, inv_rate, dex_fee, weight
+                            )
+                            graph.add_edge(quote_node, base_node,
+                                         weight=weight,
+                                         rate=inv_rate,
+                                         fee=dex_fee,
+                                         pair=pair,
+                                         exchange=protocol_name,
+                                         trade_type='buy',
+                                         liquidity=pair_data.get('liquidity', 0))
+                        except (ValueError, OverflowError) as e:
+                            logger.error(f"Error calculating DEX weight for {pair}: {e}")
+                            continue
 
     def add_cross_exchange_edges(self, graph: nx.DiGraph, price_data: Dict[str, Any]):
         """Add edges between same tokens on different exchanges"""
