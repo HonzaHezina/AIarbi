@@ -125,15 +125,49 @@ class TriangularArbitrage:
 
     def find_valid_triangle(self, available_pairs: Dict, pair1: str, pair2: str, pair3: str,
                            pair1_alt: str, pair2_alt: str, pair3_alt: str) -> Optional[Dict]:
-        """Find a valid triangle configuration"""
+        """
+        Find a valid triangle configuration.
+        
+        For a triangular arbitrage path A → B → C → A:
+        - We want pair A/B (to convert A to B)
+        - We want pair B/C (to convert B to C)
+        - We want pair C/A (to convert C to A)
+        
+        If the exact pairs aren't available, we try their inverses (B/A, C/B, A/C)
+        and need to track which action to use for edge weight calculation.
+        """
 
+        # For each edge in the triangle, determine the correct action:
+        # - 'sell' = selling the base currency of the pair (use bid price)
+        # - 'buy' = buying the base currency of the pair (use ask price, then invert)
+        #
+        # For a triangular path A → B → C → A:
+        # - Edge A→B: Want to convert A to B
+        #   If pair is A/B: we sell A (action='sell', rate = bid)
+        #   If pair is B/A: we buy A in reverse = sell B (action='buy', rate = 1/ask)
+        # - Edge B→C: Want to convert B to C
+        #   If pair is B/C: we sell B (action='sell', rate = bid)
+        #   If pair is C/B: we buy B in reverse = sell C (action='buy', rate = 1/ask)
+        # - Edge C→A: Want to convert C to A
+        #   If pair is C/A: we sell C (action='sell', rate = bid)
+        #   If pair is A/C: we buy C in reverse = sell A (action='buy', rate = 1/ask)
+        #
+        # IMPORTANT: All edges should use 'sell' if the pair orientation matches
+        # the desired conversion direction!
+        
         triangle_configs = [
-            # Direct pairs
-            {'pair1': pair1, 'pair2': pair2, 'pair3': pair3},
-            # Mixed orientations
-            {'pair1': pair1_alt, 'pair2': pair2, 'pair3': pair3_alt},
-            {'pair1': pair1, 'pair2': pair2_alt, 'pair3': pair3_alt},
-            {'pair1': pair1_alt, 'pair2': pair2_alt, 'pair3': pair3},
+            # Direct pairs: A/B, B/C, C/A - all aligned with conversion direction
+            {'pair1': pair1, 'pair2': pair2, 'pair3': pair3, 
+             'action1': 'sell', 'action2': 'sell', 'action3': 'sell'},
+            # Mixed: B/A (inverted), B/C, A/C (inverted)
+            {'pair1': pair1_alt, 'pair2': pair2, 'pair3': pair3_alt,
+             'action1': 'buy', 'action2': 'sell', 'action3': 'buy'},
+            # Mixed: A/B, C/B (inverted), A/C (inverted)  
+            {'pair1': pair1, 'pair2': pair2_alt, 'pair3': pair3_alt,
+             'action1': 'sell', 'action2': 'buy', 'action3': 'buy'},
+            # Mixed: B/A (inverted), C/B (inverted), C/A
+            {'pair1': pair1_alt, 'pair2': pair2_alt, 'pair3': pair3,
+             'action1': 'buy', 'action2': 'buy', 'action3': 'sell'},
         ]
 
         for config in triangle_configs:
@@ -146,7 +180,10 @@ class TriangularArbitrage:
                     'pair3': p3,
                     'price1': available_pairs[p1],
                     'price2': available_pairs[p2],
-                    'price3': available_pairs[p3]
+                    'price3': available_pairs[p3],
+                    'action1': config['action1'],
+                    'action2': config['action2'],
+                    'action3': config['action3']
                 }
 
         return None
@@ -184,10 +221,15 @@ class TriangularArbitrage:
 
             # Add cycle edges with weights
             edges_added = 0
+            
+            # Get the action for each edge (determined by find_valid_triangle)
+            action1 = triangle_data.get('action1', 'sell')
+            action2 = triangle_data.get('action2', 'sell')
+            action3 = triangle_data.get('action3', 'buy')
 
             # Edge 1: curr1_base -> curr1_quote (using pair1)
             rate1, weight1 = self.calculate_edge_weight(
-                triangle_data['price1'], 'sell', exchange_type
+                triangle_data['price1'], action1, exchange_type
             )
             if weight1 is not None:
                 graph.add_edge(node1, node2,
@@ -197,12 +239,13 @@ class TriangularArbitrage:
                              exchange=exchange_name,
                              pair=pair1,
                              step=1,
+                             action=action1,
                              triangle_id=f"{curr1_base}-{curr1_quote}-{curr2_quote}")
                 edges_added += 1
 
             # Edge 2: curr1_quote -> curr2_quote (using pair2)
             rate2, weight2 = self.calculate_edge_weight(
-                triangle_data['price2'], 'sell', exchange_type
+                triangle_data['price2'], action2, exchange_type
             )
             if weight2 is not None:
                 graph.add_edge(node2, node3,
@@ -212,12 +255,13 @@ class TriangularArbitrage:
                              exchange=exchange_name,
                              pair=pair2,
                              step=2,
+                             action=action2,
                              triangle_id=f"{curr1_base}-{curr1_quote}-{curr2_quote}")
                 edges_added += 1
 
             # Edge 3: curr2_quote -> curr1_base (using pair3)
             rate3, weight3 = self.calculate_edge_weight(
-                triangle_data['price3'], 'buy', exchange_type
+                triangle_data['price3'], action3, exchange_type
             )
             if weight3 is not None:
                 graph.add_edge(node3, node1,
@@ -227,6 +271,7 @@ class TriangularArbitrage:
                              exchange=exchange_name, 
                              pair=pair3,
                              step=3,
+                             action=action3,
                              triangle_id=f"{curr1_base}-{curr1_quote}-{curr2_quote}")
                 edges_added += 1
 
@@ -237,18 +282,46 @@ class TriangularArbitrage:
             return 0
 
     def calculate_edge_weight(self, price_info: Dict, action: str, exchange_type: str) -> Tuple[Optional[float], Optional[float]]:
-        """Calculate edge weight for triangular arbitrage"""
-
+        """
+        Calculate edge weight for triangular arbitrage.
+        
+        Args:
+            price_info: Dict with 'bid', 'ask', and optionally 'fee'
+            action: 'sell' or 'buy' - determines which price to use
+            exchange_type: 'dex' or 'cex' - determines default fee
+            
+        Returns:
+            (rate, weight) tuple where:
+            - rate: conversion rate (how many units of quote per unit of base)
+            - weight: -log(effective_rate) for Bellman-Ford
+        """
         try:
+            # Get the appropriate rate based on action
             if action == 'sell':
+                # Selling base currency for quote currency - use bid price
                 rate = price_info.get('bid', 0)
             else:  # buy
-                rate = price_info.get('ask', 0)
-                if rate > 0:
-                    rate = 1 / rate  # Invert for buy operations
+                # Buying base currency with quote currency - use ask price
+                # For 'buy', we need to invert: if BTC/USDT ask is 50000,
+                # then buying BTC costs 50000 USDT per BTC, so the rate
+                # from USDT to BTC is 1/50000 = 0.00002 BTC per USDT
+                ask_price = price_info.get('ask', 0)
+                if ask_price > 0:
+                    rate = 1 / ask_price
+                else:
+                    return None, None
 
+            # Validate rate
             if rate <= 0:
+                logger.warning(f"Invalid rate {rate} for action '{action}' with price_info: {price_info}")
                 return None, None
+            
+            # Check for extremely high or low rates that indicate data issues
+            if rate > 1e6 or rate < 1e-6:
+                logger.warning(f"Suspicious rate {rate} for action '{action}'. "
+                             f"Price info: bid={price_info.get('bid')}, ask={price_info.get('ask')}. "
+                             f"This may indicate price data issues.")
+                # Still allow it but log the warning
 
             # Apply fees
             if exchange_type == 'dex':
@@ -256,13 +329,25 @@ class TriangularArbitrage:
             else:
                 fee = 0.001  # 0.1% default CEX fee
 
+            # Calculate effective rate after fees
             effective_rate = rate * (1 - fee)
+            
+            # Validate effective rate
+            if effective_rate <= 0:
+                logger.error(f"Negative or zero effective_rate: rate={rate}, fee={fee}")
+                return None, None
+
+            # Calculate weight for Bellman-Ford (negative log)
             weight = -math.log(effective_rate)
 
             return rate, weight
 
+        except (ValueError, OverflowError, ZeroDivisionError) as e:
+            logger.error(f"Math error in calculate_edge_weight: {e}. "
+                        f"price_info={price_info}, action={action}")
+            return None, None
         except Exception as e:
-            logger.exception(" Error calculating edge weight: %s", str(e))
+            logger.exception(f"Unexpected error calculating edge weight: {str(e)}")
             return None, None
 
     async def calculate_triangular_profit(self, triangle_data: Dict, exchange_type: str) -> Dict[str, Any]:
