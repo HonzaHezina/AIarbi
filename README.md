@@ -124,6 +124,39 @@ See `core/data_engine.py` for implementation and `utils/config.py` for configura
 - **Pera Wallet:** Compatible with Algorand DEX protocols for secure asset management
 - See `core/data_engine.py` for DEX integration
 
+### 🔷 Algorand Blockchain Support
+
+**Why Algorand?**
+- ⚡ **Ultra-fast transactions**: ~4.5 second finality
+- 💰 **Extremely low fees**: ~$0.001 per transaction
+- 🌱 **Eco-friendly**: Carbon-negative blockchain
+- 🔒 **Security**: Pure Proof-of-Stake consensus
+
+**Supported Algorand DEX:**
+
+1. **Tinyman** (https://tinyman.org)
+   - Largest AMM DEX on Algorand
+   - Fee: 0.25%
+   - High liquidity for ALGO, USDC, USDT
+   - Pera Wallet integration
+
+2. **Pact** (https://pact.fi)
+   - Stable AMM for stablecoins
+   - Fee: 0.3%
+   - Optimized for low slippage
+   - LP token support
+
+**Supported Algorand tokens:**
+- ALGO (native token)
+- USDC (Algorand)
+- USDT (Algorand)
+- goBTC, goETH (wrapped assets)
+
+**Pera Wallet integration:**
+- Secure management of Algorand assets
+- Easy connection to DEX protocols
+- WalletConnect support (ready for future implementation)
+
 ### Fallbacks, Simulation & Demo Mode
 - Demo-safe behavior: when Web3 or an exchange call is unavailable, the DataEngine will generate simulated/fallback tickers so the system remains functional for testing.
 - A synthetic exchange can be injected for demo arbitrage scenarios when `DEBUG_DEMO_INJECT_SYNTHETIC` in `utils/config.py` is True (useful for end-to-end tests).
