@@ -115,6 +115,16 @@ class DataEngine:
                 'name': 'Pact',
                 'network': 'algorand',
                 'app_id': 6  # Pact will be configured with proper app IDs
+            },
+            'algofi': {
+                'name': 'AlgoFi',
+                'network': 'algorand',
+                'app_id': 'algofi_v1'  # AlgoFi AMM protocol
+            },
+            'algox': {
+                'name': 'Algox',
+                'network': 'algorand',
+                'app_id': 'algox_v1'  # Algox (AlgoSwap) protocol
             }
         }
 
@@ -618,7 +628,14 @@ class DataEngine:
             'BNB/USDT': 300,
             'ADA/USDT': 0.5,
             'SOL/USDT': 100,
-            'ALGO/USDT': 0.18
+            'ALGO/USDT': 0.18,
+            'ALGO/USDC': 0.18,
+            'WETH/USDC': 3000,
+            'WBTC/USDC': 50000,
+            'LINK/USDC': 15.0,
+            'MATIC/USDC': 0.85,
+            'CAKE/USDT': 3.5,
+            'DAI/USDC': 1.0
         }
 
         base_price = base_prices.get(pair, 100)
@@ -650,7 +667,14 @@ class DataEngine:
             'BNB/USDT': 300, 
             'ADA/USDT': 0.5,
             'SOL/USDT': 100,
-            'ALGO/USDT': 0.18
+            'ALGO/USDT': 0.18,
+            'ALGO/USDC': 0.18,
+            'WETH/USDC': 3000,
+            'WBTC/USDC': 50000,
+            'LINK/USDC': 15.0,
+            'MATIC/USDC': 0.85,
+            'CAKE/USDT': 3.5,
+            'DAI/USDC': 1.0
         }
 
         base_price = base_prices.get(pair, 100)
