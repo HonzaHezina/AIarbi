@@ -1221,10 +1221,37 @@ class ArbitrageDashboard:
             
             if edge_data:
                 details += f"**Each Swap Operation:**\n"
-                running_amount = opp.get('required_capital', 1000)
-                initial_amount = running_amount
+                
+                # Get starting token and USD capital
+                path = opp.get('path', [])
+                start_token = path[0].split('@')[0] if path and '@' in path[0] else 'UNKNOWN'
+                initial_usd = opp.get('required_capital', 1000)
+                
+                # Get starting token USD price (from profit analysis if available)
+                start_token_amount = opp.get('cycle_data', {}).get('start_token_amount', 1.0)
+                if start_token_amount == 1.0:
+                    # Fallback: estimate based on token
+                    token_prices = {'BTC': 50000, 'WBTC': 50000, 'ETH': 3000, 'WETH': 3000, 
+                                   'BNB': 300, 'LINK': 15, 'USDT': 1, 'USDC': 1}
+                    start_token_price = token_prices.get(start_token, 100)
+                    start_token_amount = initial_usd / start_token_price
+                
+                current_token_amount = start_token_amount
+                initial_amount = initial_usd
+                
+                details += f"\n  💡 **Starting Point**: We begin with ${initial_usd:.2f} USD\n"
+                details += f"     Which equals: {current_token_amount:.8f} {start_token}\n"
                 
                 for idx, (edge_key, edge_info) in enumerate(edge_data.items(), 1):
+                    # Parse edge key to get tokens
+                    edge_parts = edge_key.split('->')
+                    if len(edge_parts) == 2:
+                        from_token = edge_parts[0].split('@')[0] if '@' in edge_parts[0] else '?'
+                        to_token = edge_parts[1].split('@')[0] if '@' in edge_parts[1] else '?'
+                    else:
+                        from_token = '?'
+                        to_token = '?'
+                    
                     details += f"\n  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
                     details += f"  **SWAP {idx}**: {edge_key}\n"
                     details += f"  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
@@ -1233,7 +1260,7 @@ class ArbitrageDashboard:
                     buy_exchange = edge_info.get('buy_exchange', 'Unknown')
                     sell_exchange = edge_info.get('sell_exchange', 'Unknown')
                     
-                    details += f"\n  💼 **Starting with**: ${running_amount:.2f}\n\n"
+                    details += f"\n  💼 **Starting with**: {current_token_amount:.8f} {from_token}\n\n"
                     
                     # Show buy/sell prices if available (this is the key transparency!)
                     if 'buy_price' in edge_info:
@@ -1260,24 +1287,31 @@ class ArbitrageDashboard:
                     
                     # Show rate and fees with clear explanation
                     rate = edge_info.get('rate', 1.0)
-                    details += f"  📈 **Conversion Rate**: {rate:.6f}\n"
-                    details += f"     📖 For every 1 unit, you get {rate:.6f} units\n\n"
+                    details += f"  📈 **Conversion Rate**: {rate:.6f} {to_token}/{from_token}\n"
+                    details += f"     📖 For every 1 {from_token}, you get {rate:.6f} {to_token}\n\n"
                     
                     # Show fees breakdown with DETAIL
                     total_fees = edge_info.get('total_fees', 0)
-                    details += f"  💸 **Total Fees**: {total_fees * 100:.4f}% (${running_amount * total_fees:.2f})\n"
+                    if total_fees == 0:
+                        # Fallback to 'fee' field
+                        total_fees = edge_info.get('fee', 0.001)
+                    
+                    fee_amount = current_token_amount * total_fees
+                    details += f"  💸 **Total Fees**: {total_fees * 100:.4f}% ({fee_amount:.8f} {from_token})\n"
                     details += f"     📖 This includes all trading fees and slippage\n"
                     
+                    gas_cost_usd = 0
                     if 'gas_cost' in edge_info and edge_info['gas_cost'] > 0:
-                        gas_cost = edge_info['gas_cost']
-                        details += f"  ⛽ **Gas Cost**: ${gas_cost:.2f}\n"
+                        gas_cost_usd = edge_info['gas_cost']
+                        details += f"  ⛽ **Gas Cost**: ${gas_cost_usd:.2f}\n"
                         details += f"     📖 Blockchain transaction fee (DEX only)\n"
-                        running_amount -= gas_cost
                     
-                    # Calculate amount after this step
-                    fee_amount = running_amount * total_fees
-                    running_amount = running_amount * rate * (1 - total_fees)
-                    details += f"\n  ✅ **After this swap**: ${running_amount:.2f}\n"
+                    # Calculate amount after this step (CORRECT calculation)
+                    # Apply conversion: from_token * rate = to_token
+                    # Then subtract fees
+                    next_token_amount = current_token_amount * rate * (1 - total_fees)
+                    
+                    details += f"\n  ✅ **After this swap**: {next_token_amount:.8f} {to_token}\n"
                     
                     # Show strategy type
                     if 'strategy' in edge_info:
@@ -1287,16 +1321,27 @@ class ArbitrageDashboard:
                     if 'direction' in edge_info:
                         direction = edge_info['direction'].replace('_', ' → ').upper()
                         details += f"  ➡️  **Direction**: {direction}\n"
+                    
+                    # Update for next iteration
+                    current_token_amount = next_token_amount
                 
-                # Add detailed summary with calculation
-                net_profit = running_amount - initial_amount
+                # Calculate final USD value
+                final_token = path[-1].split('@')[0] if path and '@' in path[-1] else 'UNKNOWN'
+                
+                # Get final token price
+                token_prices = {'BTC': 50000, 'WBTC': 50000, 'ETH': 3000, 'WETH': 3000, 
+                               'BNB': 300, 'LINK': 15, 'USDT': 1, 'USDC': 1}
+                final_token_price = token_prices.get(final_token, 100)
+                final_usd = current_token_amount * final_token_price
+                
+                net_profit = final_usd - initial_amount
                 net_profit_pct = (net_profit / initial_amount) * 100
                 
                 details += f"\n  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
                 details += f"  💡 **FINAL SUMMARY**\n"
                 details += f"  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                details += f"  🏁 **Started with**: ${initial_amount:.2f}\n"
-                details += f"  🎉 **End with**: ${running_amount:.2f}\n"
+                details += f"  🏁 **Started with**: ${initial_amount:.2f} ({start_token_amount:.8f} {start_token})\n"
+                details += f"  🎉 **End with**: {current_token_amount:.8f} {final_token} = ${final_usd:.2f}\n"
                 details += f"  💰 **Net Profit**: ${net_profit:.2f} ({net_profit_pct:.3f}%)\n\n"
                 details += f"  ✅ **Why this works**: The price differences between exchanges are\n"
                 details += f"     larger than the sum of all fees, creating a guaranteed profit!\n\n"
