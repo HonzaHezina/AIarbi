@@ -38,6 +38,24 @@ Advanced multi-strategy cryptocurrency arbitrage detection system powered by AI 
 - **Graph-based** - NetworkX graphs with weighted edges
 - **Multi-strategy** - All strategies work together or independently
 
+### 📊 Supported Trading Pairs (16 Total)
+
+**Algorand Focus:**
+- ALGO/USDT, ALGO/USDC - Primary Algorand pairs for ultra-low fee arbitrage
+
+**Global DEX Recommended Pairs:**
+- WETH/USDC - Wrapped Ethereum on Uniswap V3, SushiSwap
+- WBTC/USDC - Wrapped Bitcoin on Curve stableswap pools
+- LINK/USDC - Chainlink on Uniswap V3
+- MATIC/USDC - Polygon on QuickSwap
+- CAKE/USDT - PancakeSwap native token on BSC
+- DAI/USDC - Stablecoin pair on Curve (low spreads)
+
+**Major Assets:**
+- BTC/USDT, ETH/USDT, BNB/USDT, ADA/USDT, SOL/USDT, MATIC/USDT, DOT/USDT, LINK/USDT
+
+See `docs_archive/RECOMMENDED_DEX_PAIRS.md` for detailed recommendations.
+
 ##  Architecture
 
 ```
@@ -105,22 +123,30 @@ All CEX exchanges are connected via CCXT clients with REST API fallback:
 
 See `core/data_engine.py` for implementation and `utils/config.py` for configuration.
 
-### Decentralized Protocols (DEX) - 5 Protocols
+### Decentralized Protocols (DEX) - 13 Protocols
 
 | Protocol | Blockchain | Status | Web3 | Avg Gas Fee |
 |----------|-----------|--------|------|-------------|
 | 🦄 **Uniswap V3** | Ethereum | ✅ Working | ✅ | ~$15-50 |
 | 🍣 **SushiSwap** | Multi-chain | ✅ Working | ✅ | ~$10-30 |
 | 🥞 **PancakeSwap** | BSC | ✅ Working | ✅ | ~$0.5-2 |
-| 🔷 **Tinyman** | Algorand | ✅ Working | ✅ | ~$0.001 |
+| 📊 **Curve** | Ethereum | ✅ Working | ✅ | ~$20-40 |
+| ⚖️ **Balancer** | Ethereum | ✅ Working | ✅ | ~$18-35 |
+| 🔵 **dYdX** | Ethereum L2 | ✅ Working | ✅ | ~$10-20 |
+| 🔄 **1inch** | Multi-chain | ✅ Working | ✅ | ~$15-30 |
+| 🔷 **Kyber** | Ethereum | ✅ Working | ✅ | ~$12-25 |
+| 🌊 **Tinyman** | Algorand | ✅ Working | ✅ | ~$0.001 |
 | 🔶 **Pact** | Algorand | ✅ Working | ✅ | ~$0.001 |
+| 💎 **AlgoFi** | Algorand | ✅ Working | ✅ | ~$0.001 |
+| 🔺 **Algox** | Algorand | ✅ Working | ✅ | ~$0.001 |
+| 🔄 **Uniswap V2** | Ethereum | ✅ Working | ✅ | ~$15-40 |
 
 **Implementation details:**
 - Web3 on-chain RPC queries when available
 - Public RPC provider for demo (recommend private RPC for production)
 - Simulated/fallback data when Web3 unavailable (demo-safe)
 - Gas fee estimation included in arbitrage calculations
-- **Algorand DEX:** Tinyman and Pact support ultra-low transaction fees (~$0.001)
+- **Algorand DEX:** 4 protocols (Tinyman, Pact, AlgoFi, Algox) with ultra-low fees (~$0.001)
 - **Pera Wallet:** Compatible with Algorand DEX protocols for secure asset management
 - See `core/data_engine.py` for DEX integration
 
@@ -145,6 +171,18 @@ See `core/data_engine.py` for implementation and `utils/config.py` for configura
    - Fee: 0.3%
    - Optimized for low slippage
    - LP token support
+
+3. **AlgoFi** (https://algofi.org)
+   - DeFi platform with AMM
+   - Fee: 0.25%
+   - Supports governance tokens (ALGO/GOV)
+   - Lending and borrowing integration
+
+4. **Algox** (AlgoSwap)
+   - Community-focused AMM
+   - Fee: 0.3%
+   - ASA token support
+   - Emerging protocol with growth potential
 
 **Supported Algorand tokens:**
 - ALGO (native token)

@@ -33,6 +33,20 @@ Full integration of Algorand blockchain support, enabling arbitrage opportunitie
 - **Gas Cost:** ~$0.001
 - **Status:** ✅ Fully Integrated
 
+### AlgoFi DEX
+- **Type:** Automated Market Maker (AMM)
+- **Network:** Algorand Mainnet
+- **Fee:** 0.25%
+- **Gas Cost:** ~$0.001
+- **Status:** ✅ Fully Integrated
+
+### Algox (AlgoSwap) DEX
+- **Type:** Automated Market Maker (AMM)
+- **Network:** Algorand Mainnet
+- **Fee:** 0.3%
+- **Gas Cost:** ~$0.001
+- **Status:** ✅ Fully Integrated
+
 ## Technical Implementation
 
 ### Configuration (`utils/config.py`)
@@ -81,10 +95,23 @@ dex_protocols = {
 - Optimized for Algorand's fast finality
 
 **Supported Trading Pairs:**
-- ALGO/USDT
-- ALGO/BTC
-- ALGO/ETH
-- All standard pairs on Algorand DEXs
+
+*Algorand Native Pairs:*
+- ALGO/USDT - Primary Algorand pair
+- ALGO/USDC - Secondary Algorand pair (newly added)
+
+*Global DEX Pairs:*
+- WETH/USDC - Wrapped Ethereum on DEXs
+- WBTC/USDC - Wrapped Bitcoin on Curve
+- LINK/USDC - Chainlink on Uniswap V3
+- MATIC/USDC - Polygon on QuickSwap
+- CAKE/USDT - PancakeSwap on BSC
+- DAI/USDC - Stablecoin pair on Curve
+
+*Traditional Pairs:*
+- BTC/USDT, ETH/USDT, BNB/USDT, ADA/USDT, SOL/USDT, MATIC/USDT, DOT/USDT, LINK/USDT
+
+**Total:** 16 trading pairs supported
 
 ## Benefits
 

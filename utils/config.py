@@ -377,11 +377,29 @@ DEX_CONFIG = {
         'network': 'algorand',
         'rate_limit': 10000,  # per day
         'reliable': False
+    },
+    'algofi': {
+        'name': 'AlgoFi',
+        'fee': 0.0025,  # 0.25%
+        'gas_cost_usd': 0.001,  # Very low fees on Algorand
+        'network': 'algorand',
+        'rate_limit': 10000,  # per day
+        'reliable': False
+    },
+    'algox': {
+        'name': 'Algox',
+        'fee': 0.003,  # 0.3%
+        'gas_cost_usd': 0.001,  # Very low fees on Algorand
+        'network': 'algorand',
+        'rate_limit': 10000,  # per day
+        'reliable': False
     }
 }
 
 # Default trading pairs to monitor
+# Includes recommended pairs for arbitrage on DEX with emphasis on Algorand
 DEFAULT_SYMBOLS = [
+    # Major pairs
     'BTC/USDT',
     'ETH/USDT',
     'BNB/USDT',
@@ -390,7 +408,16 @@ DEFAULT_SYMBOLS = [
     'MATIC/USDT',
     'DOT/USDT',
     'LINK/USDT',
-    'ALGO/USDT'
+    'ALGO/USDT',
+    # Additional recommended pairs for DEX arbitrage
+    'WETH/USDC',   # Wrapped ETH on Ethereum DEXs (Uniswap V3, SushiSwap)
+    'WBTC/USDC',   # Wrapped BTC on Curve stableswap pools
+    'LINK/USDC',   # Chainlink on Uniswap V3
+    'MATIC/USDC',  # Polygon on QuickSwap
+    'CAKE/USDT',   # PancakeSwap native token on BSC
+    'DAI/USDC',    # Stablecoin pair on Curve
+    # Algorand pairs for ultra-low fee arbitrage
+    'ALGO/USDC'    # ALGO with USDC for Algorand DEX pairs
 ]
 
 # Risk Management Settings

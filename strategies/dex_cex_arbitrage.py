@@ -20,7 +20,7 @@ class DEXCEXArbitrage:
         self.dex_protocols = [
             'uniswap_v3', 'uniswap', 'sushiswap', 'pancakeswap',
             'dydx', 'curve', 'balancer', 'oneinch', 'kyber',
-            'tinyman', 'pact'
+            'tinyman', 'pact', 'algofi', 'algox'
         ]
 
         # CEX exchanges we support  
@@ -428,6 +428,8 @@ class DEXCEXArbitrage:
             'kyber': 12.0,         # $12 average
             'tinyman': 0.001,      # $0.001 on Algorand
             'pact': 0.001,         # $0.001 on Algorand
+            'algofi': 0.001,       # $0.001 on Algorand
+            'algox': 0.001,        # $0.001 on Algorand
         }
 
         base_cost = base_gas_costs.get(dex_protocol, 10.0)
