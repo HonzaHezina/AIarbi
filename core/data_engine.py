@@ -67,6 +67,16 @@ class DataEngine:
                 'name': 'SushiSwap',
                 'router': '0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F',
                 'factory': '0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac'
+            },
+            'tinyman': {
+                'name': 'Tinyman',
+                'network': 'algorand',
+                'app_id': 552635992  # Tinyman AMM v1.1 app ID
+            },
+            'pact': {
+                'name': 'Pact',
+                'network': 'algorand',
+                'app_id': 6  # Pact will be configured with proper app IDs
             }
         }
 
@@ -569,7 +579,8 @@ class DataEngine:
             'ETH/USDT': 3000, 
             'BNB/USDT': 300,
             'ADA/USDT': 0.5,
-            'SOL/USDT': 100
+            'SOL/USDT': 100,
+            'ALGO/USDT': 0.18
         }
 
         base_price = base_prices.get(pair, 100)
@@ -600,7 +611,8 @@ class DataEngine:
             'ETH/USDT': 3000,
             'BNB/USDT': 300, 
             'ADA/USDT': 0.5,
-            'SOL/USDT': 100
+            'SOL/USDT': 100,
+            'ALGO/USDT': 0.18
         }
 
         base_price = base_prices.get(pair, 100)

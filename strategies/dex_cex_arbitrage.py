@@ -17,7 +17,7 @@ class DEXCEXArbitrage:
         self.strategy_name = "dex_cex"
 
         # DEX protocols we support
-        self.dex_protocols = ['uniswap_v3', 'sushiswap', 'pancakeswap']
+        self.dex_protocols = ['uniswap_v3', 'sushiswap', 'pancakeswap', 'tinyman', 'pact']
 
         # CEX exchanges we support  
         self.cex_exchanges = ['binance', 'kraken', 'coinbase', 'kucoin']

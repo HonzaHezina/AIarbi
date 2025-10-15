@@ -40,8 +40,8 @@ AI Crypto Arbitrage System je pokročilá aplikace pro analýzu a detekci arbitr
 
 1. ✅ **DEX/CEX Arbitrage** (`strategies/dex_cex_arbitrage.py`)
    - Využívá cenové rozdíly mezi DEX a CEX burzami
-   - Podporuje Uniswap V3, SushiSwap, PancakeSwap vs Binance, Kraken, atd.
-   - Zahrnuje výpočet gas fees
+   - Podporuje Uniswap V3, SushiSwap, PancakeSwap, Tinyman (Algorand), Pact (Algorand) vs Binance, Kraken, atd.
+   - Zahrnuje výpočet gas fees (ultra-nízké na Algorand ~$0.001)
 
 2. ✅ **Cross-Exchange Arbitrage** (`strategies/cross_exchange_arbitrage.py`)
    - Cenové rozdíly napříč centralizovanými burzami
@@ -335,13 +335,15 @@ Současná korelace: 0.45
 | 🔴 **OKX** | ✅ Funguje | ✅ | ✅ | 0.1% |
 | 🟦 **Gate.io** | ✅ Funguje | ✅ | ✅ | 0.2% |
 
-### Decentralized Protocols (DEX) - 3 protokoly
+### Decentralized Protocols (DEX) - 5 protokolů
 
 | Protokol | Blockchain | Status | Web3 | Gas Fees |
 |----------|-----------|--------|------|----------|
 | 🦄 **Uniswap V3** | Ethereum | ✅ Funguje | ✅ | ~$15-50 |
 | 🍣 **SushiSwap** | Multi-chain | ✅ Funguje | ✅ | ~$10-30 |
 | 🥞 **PancakeSwap** | BSC | ✅ Funguje | ✅ | ~$0.5-2 |
+| 🔷 **Tinyman** | Algorand | ✅ Funguje | ✅ | ~$0.001 |
+| 🔶 **Pact** | Algorand | ✅ Funguje | ✅ | ~$0.001 |
 
 ### Data Agregátory - 2 služby
 
@@ -354,7 +356,42 @@ Současná korelace: 0.45
 - CCXT poskytuje unified API pro všechny CEX burzy
 - REST API fallback funguje, pokud CCXT selže
 - Web3 připojení používá public RPC (pro produkci doporučeno vlastní RPC)
+- **Algorand DEX:** Tinyman a Pact s ultra-nízkými poplatky (~$0.001)
+- **Pera Wallet:** Kompatibilní s Algorand DEX protokoly pro bezpečnou správu aktiv
 - Demo mode funguje i bez živých dat (simulované ceny)
+
+### 🔷 Algorand Blockchain Podpora
+
+**Proč Algorand?**
+- ⚡ **Ultra-rychlé transakce**: ~4.5 sekundy finality
+- 💰 **Extrémně nízké poplatky**: ~$0.001 za transakci
+- 🌱 **Ekologický**: Carbon-negative blockchain
+- 🔒 **Bezpečnost**: Pure Proof-of-Stake konsensus
+
+**Podporované Algorand DEX:**
+
+1. **Tinyman** (https://tinyman.org)
+   - Největší AMM DEX na Algorandu
+   - Poplatek: 0.25%
+   - Vysoká likvidita pro ALGO, USDC, USDT
+   - Integrace s Pera Wallet
+
+2. **Pact** (https://pact.fi)
+   - Stabilní AMM pro stablecoiny
+   - Poplatek: 0.3%
+   - Optimalizováno pro nízký slippage
+   - Podporuje LP tokeny
+
+**Podporované Algorand tokeny:**
+- ALGO (nativní token)
+- USDC (algorand)
+- USDT (algorand)
+- goBTC, goETH (wrapped assets)
+
+**Pera Wallet integrace:**
+- Bezpečná správa Algorand aktiv
+- Snadné připojení k DEX protokolům
+- WalletConnect podpora (připraveno pro budoucí implementaci)
 
 ---
 

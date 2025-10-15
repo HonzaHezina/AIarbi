@@ -410,7 +410,8 @@ class ArbitrageDashboard:
                 
                 **1. Data Collection** 📡
                 - System connects to 4 CEX exchanges (Binance, Kraken, Coinbase, KuCoin)
-                - Monitors 3 DEX protocols (Uniswap V3, SushiSwap, PancakeSwap)
+                - Monitors 5 DEX protocols (Uniswap V3, SushiSwap, PancakeSwap, Tinyman, Pact)
+                - Includes Algorand DEX with ultra-low fees (~$0.001)
                 - Fetches real-time prices for selected trading pairs
                 
                 **2. Graph Building** 🕸️
@@ -1014,9 +1015,11 @@ class ArbitrageDashboard:
             # DEX Protocols
             dex_count = data_status.get('dex_protocols', 0)
             diag += f"\n🌐 DEX Protocols: {dex_count} configured\n"
-            diag += f"   • Uniswap V3 ✓\n"
-            diag += f"   • SushiSwap ✓\n"
-            diag += f"   • PancakeSwap ✓\n"
+            diag += f"   • Uniswap V3 (Ethereum) ✓\n"
+            diag += f"   • SushiSwap (Multi-chain) ✓\n"
+            diag += f"   • PancakeSwap (BSC) ✓\n"
+            diag += f"   • Tinyman (Algorand) ✓\n"
+            diag += f"   • Pact (Algorand) ✓\n"
             
             # Web3
             web3_connected = data_status.get('web3_connected', False)
