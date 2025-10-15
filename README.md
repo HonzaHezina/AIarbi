@@ -228,6 +228,14 @@ Visit the live application: [https://huggingface.co/spaces/HonzaH/AIarbi](https:
 - **Auto Refresh**: 30-second intervals
 - **Demo Mode**: Safe simulation (recommended)
 
+### Capital Configuration
+- **Start Capital**: Configurable via `utils/config.py` or environment variable
+  - Set `start_capital_usd` in `TRADING_CONFIG` (default: uses `max_position_size_usd` = $1000)
+  - Override via environment: `TRADING_START_CAPITAL_USD=2000`
+  - This value is used for all profit calculations and simulations
+  - Profit percentages remain consistent regardless of capital amount
+  - Profit USD values scale proportionally with the configured capital
+
 ### AI Analysis
 - Confidence scoring (0-1 scale)
 - Risk level assessment (LOW/MEDIUM/HIGH)

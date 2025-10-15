@@ -423,6 +423,9 @@ Současná korelace: 0.45
 # Logging
 LOG_LEVEL=INFO                    # DEBUG | INFO | WARNING | ERROR
 
+# Trading Configuration
+TRADING_START_CAPITAL_USD=1000   # Počáteční kapitál pro simulace
+
 # CoinMarketCap (volitelné)
 COINMARKETCAP_API_KEY=your_key   # Vyžadováno pro CMC data
 
@@ -440,11 +443,19 @@ EXCHANGE_ENDPOINT_BINANCE_BASE_URL=https://api.binance.com
 TRADING_CONFIG = {
     'min_profit_threshold': 0.0,      # Minimální profit %
     'max_position_size_usd': 1000,    # Max pozice v USD
+    'start_capital_usd': 1000,        # Počáteční kapitál pro simulace (volitelné)
     'max_concurrent_trades': 5,       # Max současných obchodů
     'max_daily_trades': 50,           # Max denních obchodů
     'demo_mode': True,                # Demo režim (doporučeno)
 }
 ```
+
+**Poznámka o kapitálu:**
+- Výchozí kapitál je `start_capital_usd` (pokud není nastaven, použije se `max_position_size_usd`)
+- Lze přepsat pomocí environment proměnné: `TRADING_START_CAPITAL_USD=2000`
+- Všechny kalkulace profitu používají tuto hodnotu
+- Procenta profitu zůstávají konzistentní bez ohledu na výši kapitálu
+- USD hodnoty profitu se škálují proporcionálně s nastaveným kapitálem
 
 ### Hugging Face Spaces konfigurace
 
