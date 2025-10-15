@@ -389,45 +389,86 @@ class TriangularArbitrage:
             return None, None
 
     async def calculate_triangular_profit(self, triangle_data: Dict, exchange_type: str) -> Dict[str, Any]:
-        """Calculate profit potential for triangular arbitrage"""
+        """
+        Calculate profit potential for triangular arbitrage.
+        
+        CRITICAL: This function must use the action type to determine how to apply rates!
+        - action='sell': multiply by bid (selling base for quote)
+        - action='buy': divide by ask (buying base with quote, or equivalently multiply by 1/ask)
+        """
 
         try:
             starting_amount = 1.0  # Start with 1 unit of base currency
 
             # Step 1: Base -> Intermediate
             price1 = triangle_data['price1']
-            rate1 = price1.get('bid', 0)
+            action1 = triangle_data.get('action1', 'sell')
             fee1 = price1.get('fee', 0.003) if exchange_type == 'dex' else 0.001
-            amount_after_step1 = starting_amount * rate1 * (1 - fee1)
+            
+            if action1 == 'sell':
+                # Selling base for quote - multiply by bid
+                rate1 = price1.get('bid', 0)
+                amount_after_step1 = starting_amount * rate1 * (1 - fee1)
+            else:  # buy
+                # Buying base with quote - divide by ask
+                rate1 = price1.get('ask', 0)
+                if rate1 > 0:
+                    amount_after_step1 = starting_amount / rate1 * (1 - fee1)
+                else:
+                    amount_after_step1 = 0
 
             # Step 2: Intermediate -> Final  
             price2 = triangle_data['price2']
-            rate2 = price2.get('bid', 0)
+            action2 = triangle_data.get('action2', 'sell')
             fee2 = price2.get('fee', 0.003) if exchange_type == 'dex' else 0.001
-            amount_after_step2 = amount_after_step1 * rate2 * (1 - fee2)
+            
+            if action2 == 'sell':
+                # Selling base for quote - multiply by bid
+                rate2 = price2.get('bid', 0)
+                amount_after_step2 = amount_after_step1 * rate2 * (1 - fee2)
+            else:  # buy
+                # Buying base with quote - divide by ask
+                rate2 = price2.get('ask', 0)
+                if rate2 > 0:
+                    amount_after_step2 = amount_after_step1 / rate2 * (1 - fee2)
+                else:
+                    amount_after_step2 = 0
 
             # Step 3: Final -> Base
             price3 = triangle_data['price3']
-            rate3 = price3.get('ask', 0)  # We're buying base currency
+            action3 = triangle_data.get('action3', 'buy')
             fee3 = price3.get('fee', 0.003) if exchange_type == 'dex' else 0.001
-
-            if rate3 > 0:
-                final_amount = amount_after_step2 / rate3 * (1 - fee3)
-            else:
-                final_amount = 0
+            
+            if action3 == 'sell':
+                # Selling base for quote - multiply by bid
+                rate3 = price3.get('bid', 0)
+                final_amount = amount_after_step2 * rate3 * (1 - fee3)
+            else:  # buy
+                # Buying base with quote - divide by ask
+                rate3 = price3.get('ask', 0)
+                if rate3 > 0:
+                    final_amount = amount_after_step2 / rate3 * (1 - fee3)
+                else:
+                    final_amount = 0
 
             # Calculate profit
             profit = final_amount - starting_amount
             profit_pct = (profit / starting_amount) * 100 if starting_amount > 0 else 0
+
+            # For logging: calculate effective rates that match edge weight calculation
+            # (so logs are consistent between profit calc and edge weight calc)
+            eff_rate1 = rate1 if action1 == 'sell' else (1/rate1 if rate1 > 0 else 0)
+            eff_rate2 = rate2 if action2 == 'sell' else (1/rate2 if rate2 > 0 else 0)
+            eff_rate3 = rate3 if action3 == 'sell' else (1/rate3 if rate3 > 0 else 0)
 
             return {
                 'profitable': profit_pct > 0.1,  # At least 0.1% profit
                 'profit_pct': profit_pct,
                 'final_amount': final_amount,
                 'steps': [
-                    {'step': 1, 'rate': rate1, 'fee': fee1, 'amount': amount_after_step1},
-                    {'step': 2, 'rate': rate2, 'fee': fee2, 'amount': amount_after_step2}, 
-                    {'step': 3, 'rate': rate3, 'fee': fee3, 'amount': final_amount}
+                    {'step': 1, 'rate': eff_rate1, 'fee': fee1, 'amount': amount_after_step1, 'action': action1},
+                    {'step': 2, 'rate': eff_rate2, 'fee': fee2, 'amount': amount_after_step2, 'action': action2}, 
+                    {'step': 3, 'rate': eff_rate3, 'fee': fee3, 'amount': final_amount, 'action': action3}
                 ]
             }
 
