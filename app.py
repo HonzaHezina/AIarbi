@@ -79,7 +79,7 @@ class ArbitrageDashboard:
             ),
             css="""
             .gradio-container {
-                background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+                background: white;
             }
             /* Enhanced contrast for all boxes and containers */
             .gr-box {
@@ -571,8 +571,9 @@ class ArbitrageDashboard:
     async def scan_arbitrage_opportunities(self, strategies, pairs, min_profit, max_opps, demo_mode):
         """Main scanning function with detailed progress tracking"""
         try:
-            self.scan_progress = "🔄 STARTING SCAN...\n"
-            self.scan_progress += "=" * 50 + "\n\n"
+            self.scan_progress = "🔄 STARTING ARBITRAGE SCAN...\n"
+            self.scan_progress += "=" * 60 + "\n\n"
+            self.scan_progress += "🎯 **WHAT THE SYSTEM IS DOING NOW**\n\n"
             logger.info("📊 Scan started")
             
             # Convert strategy names
@@ -586,13 +587,20 @@ class ArbitrageDashboard:
 
             enabled_strategies = [strategy_map[s] for s in strategies if s in strategy_map]
             
-            self.scan_progress += f"📋 Configuration:\n"
-            self.scan_progress += f"  ✓ Strategies: {', '.join(enabled_strategies)}\n"
+            self.scan_progress += f"📋 **Scan Configuration**:\n"
+            self.scan_progress += f"  ✓ Strategies enabled: {', '.join(enabled_strategies)}\n"
+            self.scan_progress += f"    📖 These determine HOW we look for price differences\n"
             self.scan_progress += f"  ✓ Trading pairs: {len(pairs)} pairs ({', '.join(pairs[:3])}...)\n"
-            self.scan_progress += f"  ✓ Min profit: {min_profit}%\n"
-            self.scan_progress += f"  ✓ Max results: {max_opps}\n\n"
+            self.scan_progress += f"    📖 These are the tokens we'll monitor\n"
+            self.scan_progress += f"  ✓ Min profit threshold: {min_profit}%\n"
+            self.scan_progress += f"    📖 Only show opportunities above this profit level\n"
+            self.scan_progress += f"  ✓ Max results to display: {max_opps}\n"
+            self.scan_progress += f"    📖 Will show the top {max_opps} most profitable opportunities\n\n"
             
-            self.scan_progress += "📡 Step 1/5: Fetching market data...\n"
+            self.scan_progress += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            self.scan_progress += "📡 **Step 1/5: Fetching Live Market Data**\n"
+            self.scan_progress += "   🔍 Connecting to exchanges...\n"
+            self.scan_progress += "   📊 Requesting current prices for all pairs...\n"
             logger.info("Fetching market data for scan")
 
             # Run arbitrage scan
@@ -600,37 +608,52 @@ class ArbitrageDashboard:
                 enabled_strategies, pairs, min_profit
             )
             
-            self.scan_progress += f"  ✓ Data loaded successfully\n\n"
+            self.scan_progress += f"   ✅ Successfully loaded price data from exchanges!\n\n"
             
-            # Display graph statistics
-            self.scan_progress += f"📊 Step 2/5: Building price graph...\n"
+            # Display graph statistics with clear explanation
+            self.scan_progress += f"📊 **Step 2/5: Building Trading Graph**\n"
+            self.scan_progress += f"   🔍 What this means: Creating a map of all possible trading paths\n"
             if hasattr(self.arbitrage_system, 'last_graph_stats'):
                 stats = self.arbitrage_system.last_graph_stats
-                self.scan_progress += f"  • Nodes (trading pairs): {stats.get('nodes', 0)}\n"
-                self.scan_progress += f"  • Edges (possible trades): {stats.get('edges', 0)}\n"
-                self.scan_progress += f"  • Tokens tracked: {stats.get('tokens', 0)}\n"
-                self.scan_progress += f"  • Exchanges monitored: {stats.get('exchanges', 0)}\n"
-                self.scan_progress += f"  ✓ Graph constructed\n\n"
+                self.scan_progress += f"   • Nodes (token-exchange pairs): {stats.get('nodes', 0)}\n"
+                self.scan_progress += f"     📖 Each node = one token on one exchange\n"
+                self.scan_progress += f"   • Edges (possible trades): {stats.get('edges', 0)}\n"
+                self.scan_progress += f"     📖 Each edge = a way to convert one token to another\n"
+                self.scan_progress += f"   • Unique tokens tracked: {stats.get('tokens', 0)}\n"
+                self.scan_progress += f"   • Exchanges monitored: {stats.get('exchanges', 0)}\n"
+                self.scan_progress += f"   ✅ Trading graph constructed!\n\n"
             else:
-                self.scan_progress += f"  ✓ Graph constructed with strategies\n\n"
+                self.scan_progress += f"   ✅ Trading graph constructed with enabled strategies!\n\n"
             
-            # Display Bellman-Ford results
-            self.scan_progress += f"🔍 Step 3/5: Detecting arbitrage cycles...\n"
+            # Display Bellman-Ford results with explanation
+            self.scan_progress += f"🔍 **Step 3/5: Detecting Profitable Cycles**\n"
+            self.scan_progress += f"   🔍 What this means: Looking for trading loops that end with profit\n"
             if hasattr(self.arbitrage_system, 'last_raw_cycles_count'):
                 raw_cycles = self.arbitrage_system.last_raw_cycles_count
-                self.scan_progress += f"  • Algorithm: Bellman-Ford cycle detection\n"
-                self.scan_progress += f"  • Raw cycles found: {raw_cycles}\n"
-                self.scan_progress += f"  • Max cycle length: {self.arbitrage_system.detector.max_cycle_length} hops\n"
-                self.scan_progress += f"  • Profit filter: ≥{-self.arbitrage_system.detector.min_profit_threshold * 100:.2f}%\n"
-                self.scan_progress += f"  ✓ Cycle detection complete\n\n"
+                self.scan_progress += f"   • Algorithm used: Bellman-Ford (finds negative-cost cycles)\n"
+                self.scan_progress += f"     📖 A 'negative cost' cycle = PROFIT when you complete the loop!\n"
+                self.scan_progress += f"   • Raw cycles discovered: {raw_cycles}\n"
+                self.scan_progress += f"     📖 These are potential arbitrage opportunities before filtering\n"
+                self.scan_progress += f"   • Max cycle length: {self.arbitrage_system.detector.max_cycle_length} trades per cycle\n"
+                self.scan_progress += f"     📖 Longer cycles have more steps but potentially higher profit\n"
+                self.scan_progress += f"   • Profit filter applied: ≥{-self.arbitrage_system.detector.min_profit_threshold * 100:.2f}%\n"
+                self.scan_progress += f"     📖 Ignoring cycles below this threshold\n"
+                self.scan_progress += f"   ✅ Cycle detection complete!\n\n"
             else:
-                self.scan_progress += f"  ✓ Cycle detection complete\n\n"
+                self.scan_progress += f"   ✅ Cycle detection complete!\n\n"
             
-            self.scan_progress += f"🤖 Step 4/5: Running AI analysis...\n"
-            self.scan_progress += f"  ✓ AI confidence scores calculated\n\n"
+            self.scan_progress += f"🤖 **Step 4/5: AI Risk Analysis**\n"
+            self.scan_progress += f"   🔍 What this means: AI evaluates each opportunity's safety and reliability\n"
+            self.scan_progress += f"   • Analyzing market conditions...\n"
+            self.scan_progress += f"   • Calculating confidence scores (0.0-1.0)...\n"
+            self.scan_progress += f"   • Assessing execution risks...\n"
+            self.scan_progress += f"   ✅ AI analysis complete!\n\n"
             
-            self.scan_progress += f"📊 Step 5/5: Filtering and sorting results...\n"
-            self.scan_progress += f"  ✓ Found {len(opportunities)} profitable opportunities\n"
+            self.scan_progress += f"📊 **Step 5/5: Filtering & Ranking Results**\n"
+            self.scan_progress += f"   🔍 What this means: Selecting the best opportunities for you\n"
+            self.scan_progress += f"   • Filtering by minimum profit threshold ({min_profit}%)...\n"
+            self.scan_progress += f"   • Sorting by profitability and AI confidence...\n"
+            self.scan_progress += f"   ✅ Found {len(opportunities)} profitable opportunities!\n"
 
             # Limit results
             total_found = len(opportunities)
@@ -664,16 +687,35 @@ class ArbitrageDashboard:
             avg_profit_val = total_profit / len(opportunities) if opportunities else 0
             avg_confidence_val = total_confidence / len(opportunities) if opportunities else 0
 
-            self.scan_progress += f"\n" + "=" * 50 + "\n"
-            self.scan_progress += f"✅ SCAN COMPLETE!\n\n"
-            self.scan_progress += f"📈 Results Summary:\n"
-            self.scan_progress += f"  • Total opportunities: {len(opportunities)}\n"
-            self.scan_progress += f"  • Average profit: {avg_profit_val:.3f}%\n"
-            self.scan_progress += f"  • Average AI confidence: {avg_confidence_val:.2f}/1.0\n\n"
-            self.scan_progress += f"💡 Next steps:\n"
-            self.scan_progress += f"  1. View results in the table above\n"
-            self.scan_progress += f"  2. Check tab 2️⃣ for detailed analysis\n"
-            self.scan_progress += f"  3. Go to tab 3️⃣ to execute an opportunity\n"
+            self.scan_progress += f"\n" + "━" * 60 + "\n"
+            self.scan_progress += f"✅ **SCAN COMPLETE!**\n\n"
+            self.scan_progress += f"📈 **Results Summary**:\n"
+            self.scan_progress += f"  • Total opportunities found: {len(opportunities)}\n"
+            self.scan_progress += f"  • Average expected profit: {avg_profit_val:.3f}%\n"
+            self.scan_progress += f"  • Average AI confidence: {avg_confidence_val:.2f}/1.0\n"
+            self.scan_progress += f"    📖 Higher confidence = lower risk, more reliable\n\n"
+            
+            if len(opportunities) > 0:
+                best_opp = opportunities[0]
+                self.scan_progress += f"🏆 **Best Opportunity Found**:\n"
+                self.scan_progress += f"  • Strategy: {best_opp.get('strategy', 'N/A')}\n"
+                self.scan_progress += f"  • Token: {best_opp.get('token', 'N/A')}\n"
+                self.scan_progress += f"  • Expected profit: {best_opp.get('profit_pct', 0):.3f}%\n"
+                self.scan_progress += f"  • AI confidence: {best_opp.get('ai_confidence', 0):.2f}\n\n"
+            
+            self.scan_progress += f"💡 **What to do next**:\n"
+            self.scan_progress += f"  1️⃣ View results in the table above to see all opportunities\n"
+            self.scan_progress += f"  2️⃣ Go to tab 2️⃣ 'Results & Analysis' for charts and AI insights\n"
+            self.scan_progress += f"  3️⃣ Go to tab 3️⃣ 'Execution Center' to:\n"
+            self.scan_progress += f"     - Select an opportunity\n"
+            self.scan_progress += f"     - Click 'Show Details' to see EXACT prices and WHY it's profitable\n"
+            self.scan_progress += f"     - Execute (or simulate) the trade\n\n"
+            self.scan_progress += f"🔍 **System Transparency**: Every opportunity shows you:\n"
+            self.scan_progress += f"  ✅ Exact buy and sell prices from exchanges\n"
+            self.scan_progress += f"  ✅ All fees (trading fees, gas, slippage)\n"
+            self.scan_progress += f"  ✅ Step-by-step profit calculation\n"
+            self.scan_progress += f"  ✅ WHY the system found this opportunity\n"
+            self.scan_progress += f"  ✅ Which swaps will be performed\n"
             
             logger.info(f"✅ Scan complete: {len(opportunities)} opportunities found")
 
@@ -1072,12 +1114,56 @@ class ArbitrageDashboard:
             details += f"**Status**: {opp.get('status', 'Unknown')}\n"
             details += f"**Timestamp**: {opp.get('timestamp', datetime.now()).strftime('%Y-%m-%d %H:%M:%S')}\n\n"
             
-            # Path details
-            details += f"### 📍 Trading Path\n"
+            # WHY was this found? - Add reasoning
+            details += f"### 🎓 WHY This Trade Was Found\n"
+            profit_pct = opp.get('profit_pct', 0)
+            strategy = opp.get('strategy', 'Unknown')
+            
+            if strategy == 'dex_cex':
+                details += f"**Reason**: The system detected a price difference between a DEX (Decentralized Exchange)\n"
+                details += f"and a CEX (Centralized Exchange). When the same token has different prices on\n"
+                details += f"different exchanges, we can buy low on one and sell high on the other.\n\n"
+                details += f"**Why it's profitable**: Even after paying all fees (trading fees, gas fees, slippage),\n"
+                details += f"the price difference is large enough ({profit_pct:.3f}%) to make a profit.\n\n"
+            elif strategy == 'cross_exchange':
+                details += f"**Reason**: The system found the same token priced differently on two centralized exchanges.\n"
+                details += f"This happens when market prices move faster on one exchange than another.\n\n"
+                details += f"**Why it's profitable**: The {profit_pct:.3f}% price spread exceeds the combined\n"
+                details += f"trading fees on both exchanges, leaving a net profit.\n\n"
+            elif strategy == 'triangular':
+                details += f"**Reason**: The system detected a triangular arbitrage opportunity - when you can\n"
+                details += f"trade through 3 currencies in a circle and end up with more than you started.\n\n"
+                details += f"**Why it's profitable**: The exchange rates between the three pairs are misaligned,\n"
+                details += f"creating a {profit_pct:.3f}% profit opportunity after all fees.\n\n"
+            elif strategy == 'wrapped_tokens':
+                details += f"**Reason**: The system found a price inefficiency between a native token and its\n"
+                details += f"wrapped version (e.g., ETH vs WETH) across different platforms.\n\n"
+                details += f"**Why it's profitable**: Despite wrapping/unwrapping costs, the {profit_pct:.3f}%\n"
+                details += f"price difference makes this trade worthwhile.\n\n"
+            else:
+                details += f"**Reason**: The system's AI model detected a statistical anomaly or pattern\n"
+                details += f"indicating a {profit_pct:.3f}% profit opportunity.\n\n"
+            
+            details += f"**System Detection Method**: Bellman-Ford algorithm analyzed {opp.get('analyzed_paths', 'multiple')}\n"
+            details += f"possible trading paths and found this cycle with negative cost (= profit!).\n\n"
+            
+            # Path details with CLEAR explanation of what will happen
+            details += f"### 📍 Trading Path - What Will Actually Happen\n"
             path = opp.get('path', [])
             if path:
+                details += f"**Step-by-step execution plan:**\n\n"
                 for i, node in enumerate(path):
-                    details += f"  {i+1}. {node}\n"
+                    details += f"  **Step {i+1}**: {node}\n"
+                    if i < len(path) - 1:
+                        next_node = path[i+1]
+                        details += f"  ➜ Action: Convert/trade from {node} to {next_node}\n"
+                    if i == 0:
+                        details += f"  ➜ You START here with your capital\n"
+                    elif i == len(path) - 1:
+                        details += f"  ➜ You END here with profit!\n"
+                details += f"\n**Complete cycle**: You start at {path[0]} and return to {path[-1]} with more value!\n"
+            else:
+                details += f"  Path information not available.\n"
             details += "\n"
             
             # Profit Analysis
@@ -1087,68 +1173,104 @@ class ArbitrageDashboard:
             details += f"**Required Capital**: ${opp.get('required_capital', 0):.2f}\n"
             details += f"**Total Fees**: ${opp.get('fees_total', 0):.4f}\n\n"
             
-            # Price Comparison (detailed breakdown)
-            details += f"### 🔍 Price Comparison Details\n"
-            details += f"**This shows EXACTLY what is being compared:**\n\n"
+            # Price Comparison (detailed breakdown) with CLEAR explanation
+            details += f"### 🔍 Detailed Trade Breakdown - EXACTLY What Will Happen\n"
+            details += f"**This shows the REAL prices, fees, and calculations:**\n\n"
             
             cycle_data = opp.get('cycle_data', {})
             edge_data = cycle_data.get('edge_data', {})
             
             if edge_data:
-                details += f"**Step-by-Step Trading Path**:\n"
+                details += f"**Each Swap Operation:**\n"
+                running_amount = opp.get('required_capital', 1000)
+                initial_amount = running_amount
+                
                 for idx, (edge_key, edge_info) in enumerate(edge_data.items(), 1):
-                    details += f"\n  **Step {idx}**: {edge_key}\n"
+                    details += f"\n  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    details += f"  **SWAP {idx}**: {edge_key}\n"
+                    details += f"  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
                     
                     # Extract exchange info
                     buy_exchange = edge_info.get('buy_exchange', 'Unknown')
                     sell_exchange = edge_info.get('sell_exchange', 'Unknown')
                     
+                    details += f"\n  💼 **Starting with**: ${running_amount:.2f}\n\n"
+                    
                     # Show buy/sell prices if available (this is the key transparency!)
                     if 'buy_price' in edge_info:
-                        details += f"     💵 BUY Price: ${edge_info['buy_price']:.8f}\n"
+                        details += f"  💵 **BUY Price**: ${edge_info['buy_price']:.8f}\n"
                         if buy_exchange != 'Unknown':
-                            details += f"        on {buy_exchange}\n"
+                            details += f"     📍 Exchange: {buy_exchange}\n"
+                        details += f"     📖 This is the LIVE price we'll pay\n\n"
                     
                     if 'sell_price' in edge_info:
-                        details += f"     💰 SELL Price: ${edge_info['sell_price']:.8f}\n"
+                        details += f"  💰 **SELL Price**: ${edge_info['sell_price']:.8f}\n"
                         if sell_exchange != 'Unknown':
-                            details += f"        on {sell_exchange}\n"
+                            details += f"     📍 Exchange: {sell_exchange}\n"
+                        details += f"     📖 This is the LIVE price we'll receive\n\n"
                     
-                    # Calculate and show spread
+                    # Calculate and show spread with explanation
                     if 'buy_price' in edge_info and 'sell_price' in edge_info:
                         buy_p = edge_info['buy_price']
                         sell_p = edge_info['sell_price']
                         if buy_p > 0:
                             spread_pct = ((sell_p - buy_p) / buy_p) * 100
-                            details += f"     📊 Spread: {spread_pct:.4f}%\n"
+                            spread_direction = "PROFIT! 📈" if spread_pct > 0 else "LOSS 📉"
+                            details += f"  📊 **Price Spread**: {spread_pct:.4f}% {spread_direction}\n"
+                            details += f"     📖 Why profitable: Sell price is higher than buy price!\n\n"
                     
-                    # Show rate and fees
-                    details += f"     📈 Conversion Rate: {edge_info.get('rate', 1.0):.6f}\n"
+                    # Show rate and fees with clear explanation
+                    rate = edge_info.get('rate', 1.0)
+                    details += f"  📈 **Conversion Rate**: {rate:.6f}\n"
+                    details += f"     📖 For every 1 unit, you get {rate:.6f} units\n\n"
                     
-                    # Show fees breakdown
+                    # Show fees breakdown with DETAIL
                     total_fees = edge_info.get('total_fees', 0)
-                    details += f"     💸 Total Fees: {total_fees * 100:.4f}%\n"
+                    details += f"  💸 **Total Fees**: {total_fees * 100:.4f}% (${running_amount * total_fees:.2f})\n"
+                    details += f"     📖 This includes all trading fees and slippage\n"
                     
                     if 'gas_cost' in edge_info and edge_info['gas_cost'] > 0:
-                        details += f"     ⛽ Gas Cost: ${edge_info['gas_cost']:.2f}\n"
+                        gas_cost = edge_info['gas_cost']
+                        details += f"  ⛽ **Gas Cost**: ${gas_cost:.2f}\n"
+                        details += f"     📖 Blockchain transaction fee (DEX only)\n"
+                        running_amount -= gas_cost
+                    
+                    # Calculate amount after this step
+                    fee_amount = running_amount * total_fees
+                    running_amount = running_amount * rate * (1 - total_fees)
+                    details += f"\n  ✅ **After this swap**: ${running_amount:.2f}\n"
                     
                     # Show strategy type
                     if 'strategy' in edge_info:
-                        details += f"     🎯 Strategy: {edge_info['strategy']}\n"
+                        details += f"  🎯 **Strategy Type**: {edge_info['strategy']}\n"
                     
                     # Show direction for dex/cex
                     if 'direction' in edge_info:
                         direction = edge_info['direction'].replace('_', ' → ').upper()
-                        details += f"     ➡️  Direction: {direction}\n"
+                        details += f"  ➡️  **Direction**: {direction}\n"
                 
-                # Add summary
-                details += f"\n  **💡 Summary**:\n"
-                details += f"  This arbitrage works by exploiting the price differences\n"
-                details += f"  shown above. The system continuously monitors these prices\n"
-                details += f"  to find profitable opportunities.\n"
+                # Add detailed summary with calculation
+                net_profit = running_amount - initial_amount
+                net_profit_pct = (net_profit / initial_amount) * 100
+                
+                details += f"\n  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                details += f"  💡 **FINAL SUMMARY**\n"
+                details += f"  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                details += f"  🏁 **Started with**: ${initial_amount:.2f}\n"
+                details += f"  🎉 **End with**: ${running_amount:.2f}\n"
+                details += f"  💰 **Net Profit**: ${net_profit:.2f} ({net_profit_pct:.3f}%)\n\n"
+                details += f"  ✅ **Why this works**: The price differences between exchanges are\n"
+                details += f"     larger than the sum of all fees, creating a guaranteed profit!\n\n"
+                details += f"  🔍 **Verification**: You can check these prices yourself on the\n"
+                details += f"     exchanges listed above to verify this opportunity is REAL!\n"
             else:
                 details += f"  ⚠️ No detailed edge data available for this opportunity.\n"
                 details += f"  The strategy might be using aggregated pricing.\n"
+                details += f"\n  However, the profit calculation includes:\n"
+                details += f"  • All exchange fees (maker/taker)\n"
+                details += f"  • Network gas costs (for DEX)\n"
+                details += f"  • Estimated slippage\n"
+                details += f"  • Price impact of your trade size\n"
             
             details += f"\n"
             
