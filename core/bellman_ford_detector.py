@@ -202,10 +202,33 @@ class BellmanFordDetector:
             # Classify cycle type
             cycle_type = self.classify_cycle_type(cycle_path)
 
+            # Convert log-space weight to actual profit percentage
+            # Weight is negative log of the product of rates: W = -log(rate1 * rate2 * ... * rateN)
+            # If W < 0 (negative cycle), then product > 1, meaning profit
+            # Profit factor = exp(-W), so profit % = (exp(-W) - 1) * 100
+            
+            # However, if weight is very negative (< -5), it indicates a bug in edge calculation
+            # Cap it to prevent overflow and mark for review
+            if cycle_weight < -5:
+                # Very negative weight indicates incorrect edge weights
+                logger.warning(f"Extremely negative cycle weight detected: {cycle_weight:.2f}. "
+                             f"This suggests incorrect edge weight calculation. Capping profit at 100%.")
+                profit_percentage = 100.0
+            elif cycle_weight > 5:
+                # Very positive weight means significant loss
+                profit_percentage = -99.0
+            else:
+                try:
+                    profit_factor = math.exp(-cycle_weight)
+                    profit_percentage = (profit_factor - 1) * 100
+                except (OverflowError, ValueError) as e:
+                    logger.error(f"Error calculating profit from weight {cycle_weight}: {e}")
+                    profit_percentage = 0.0
+            
             return {
                 'path': cycle_path,
                 'weight': cycle_weight,
-                'profit_estimate': -cycle_weight * 100,  # Convert to percentage
+                'profit_estimate': profit_percentage,
                 'edge_data': edge_data,
                 'strategy_type': cycle_type,
                 'cycle_length': len(cycle_path) - 1,
@@ -354,10 +377,25 @@ class BellmanFordDetector:
                         round_trip_weight = edge1.get('weight', 0) + edge2.get('weight', 0)
 
                         if round_trip_weight < -0.005:  # Profitable
+                            # Convert log-space weight to actual profit percentage
+                            if round_trip_weight < -5:
+                                logger.warning(f"Extremely negative round-trip weight: {round_trip_weight:.2f}. "
+                                             f"Capping profit at 100%.")
+                                profit_percentage = 100.0
+                            elif round_trip_weight > 5:
+                                profit_percentage = -99.0
+                            else:
+                                try:
+                                    profit_factor = math.exp(-round_trip_weight)
+                                    profit_percentage = (profit_factor - 1) * 100
+                                except (OverflowError, ValueError) as e:
+                                    logger.error(f"Error calculating profit: {e}")
+                                    profit_percentage = 0.0
+                            
                             opportunities.append({
                                 'path': [node1, node2, node1],
                                 'weight': round_trip_weight,
-                                'profit_estimate': -round_trip_weight * 100,
+                                'profit_estimate': profit_percentage,
                                 'strategy_type': 'cross_exchange',
                                 'exchanges_involved': [exchange1, exchange2],
                                 'tokens_involved': [token],

@@ -237,18 +237,46 @@ class TriangularArbitrage:
             return 0
 
     def calculate_edge_weight(self, price_info: Dict, action: str, exchange_type: str) -> Tuple[Optional[float], Optional[float]]:
-        """Calculate edge weight for triangular arbitrage"""
-
+        """
+        Calculate edge weight for triangular arbitrage.
+        
+        Args:
+            price_info: Dict with 'bid', 'ask', and optionally 'fee'
+            action: 'sell' or 'buy' - determines which price to use
+            exchange_type: 'dex' or 'cex' - determines default fee
+            
+        Returns:
+            (rate, weight) tuple where:
+            - rate: conversion rate (how many units of quote per unit of base)
+            - weight: -log(effective_rate) for Bellman-Ford
+        """
         try:
+            # Get the appropriate rate based on action
             if action == 'sell':
+                # Selling base currency for quote currency - use bid price
                 rate = price_info.get('bid', 0)
             else:  # buy
-                rate = price_info.get('ask', 0)
-                if rate > 0:
-                    rate = 1 / rate  # Invert for buy operations
+                # Buying base currency with quote currency - use ask price
+                # For 'buy', we need to invert: if BTC/USDT ask is 50000,
+                # then buying BTC costs 50000 USDT per BTC, so the rate
+                # from USDT to BTC is 1/50000 = 0.00002 BTC per USDT
+                ask_price = price_info.get('ask', 0)
+                if ask_price > 0:
+                    rate = 1 / ask_price
+                else:
+                    return None, None
 
+            # Validate rate
             if rate <= 0:
+                logger.warning(f"Invalid rate {rate} for action '{action}' with price_info: {price_info}")
                 return None, None
+            
+            # Check for extremely high or low rates that indicate data issues
+            if rate > 1e6 or rate < 1e-6:
+                logger.warning(f"Suspicious rate {rate} for action '{action}'. "
+                             f"Price info: bid={price_info.get('bid')}, ask={price_info.get('ask')}. "
+                             f"This may indicate price data issues.")
+                # Still allow it but log the warning
 
             # Apply fees
             if exchange_type == 'dex':
@@ -256,13 +284,25 @@ class TriangularArbitrage:
             else:
                 fee = 0.001  # 0.1% default CEX fee
 
+            # Calculate effective rate after fees
             effective_rate = rate * (1 - fee)
+            
+            # Validate effective rate
+            if effective_rate <= 0:
+                logger.error(f"Negative or zero effective_rate: rate={rate}, fee={fee}")
+                return None, None
+
+            # Calculate weight for Bellman-Ford (negative log)
             weight = -math.log(effective_rate)
 
             return rate, weight
 
+        except (ValueError, OverflowError, ZeroDivisionError) as e:
+            logger.error(f"Math error in calculate_edge_weight: {e}. "
+                        f"price_info={price_info}, action={action}")
+            return None, None
         except Exception as e:
-            logger.exception(" Error calculating edge weight: %s", str(e))
+            logger.exception(f"Unexpected error calculating edge weight: {str(e)}")
             return None, None
 
     async def calculate_triangular_profit(self, triangle_data: Dict, exchange_type: str) -> Dict[str, Any]:
