@@ -203,6 +203,15 @@ class DataEngine:
 
         for exchange_name, exchange in self.cex_exchanges.items():
             cex_data[exchange_name] = {}
+            
+            # Load markets if not already loaded (required for symbols to be populated)
+            try:
+                if not getattr(exchange, 'symbols', None):
+                    logger.debug(f"Loading markets for {exchange_name}...")
+                    await asyncio.to_thread(exchange.load_markets)
+                    logger.debug(f"Markets loaded for {exchange_name}, symbols count: {len(exchange.symbols) if exchange.symbols else 0}")
+            except Exception as load_err:
+                logger.warning(f"Failed to load markets for {exchange_name}: {load_err} - will use fallbacks")
 
             for pair in trading_pairs:
                 try:
@@ -211,7 +220,7 @@ class DataEngine:
 
                     # Validate exchange.symbols
                     if not getattr(exchange, 'symbols', None):
-                        logger.warning(f"{exchange_name} symbols are None or empty - using fallback for {pair}")
+                        logger.debug(f"{exchange_name} symbols not available after load attempt - using fallback for {pair}")
                         fb = self.generate_fallback_ticker(pair)
                         # attach origin info so downstream code can show source pair
                         fb = dict(fb)
@@ -568,17 +577,25 @@ class DataEngine:
                     normalized = self._normalize_price_dict(price_data)
                     if not normalized:
                         logger.warning(f"Invalid DEX price for {pair} on {protocol_name}; using simulated fallback")
-                        dex_data[protocol_name][pair] = self.generate_simulated_dex_price(pair)
+                        fallback = self.generate_simulated_dex_price(pair)
+                        dex_data[protocol_name][pair] = fallback
                     else:
                         # Preserve extra fields commonly present in DEX entries
-                        for extra in ('fee', 'liquidity'):
+                        for extra in ('fee', 'liquidity', 'pair', 'source'):
                             if isinstance(price_data, dict) and extra in price_data:
                                 normalized[extra] = price_data[extra]
+                        # Ensure pair and source are set
+                        if 'pair' not in normalized or not normalized['pair']:
+                            normalized['pair'] = pair
+                        if 'source' not in normalized or not normalized['source']:
+                            normalized['source'] = f"dex:{protocol_name}"
                         dex_data[protocol_name][pair] = normalized
     
                     # Add individual token data
                     base_token = pair.split('/')[0]
-                    dex_data[protocol_name][base_token] = dex_data[protocol_name][pair]
+                    token_data = dict(dex_data[protocol_name][pair])
+                    token_data['mapped_from_pair'] = pair
+                    dex_data[protocol_name][base_token] = token_data
 
                 except Exception as e:
                     logger.exception(f"Failed to fetch {pair} from {protocol_name}: {str(e)}")
@@ -610,7 +627,9 @@ class DataEngine:
                 'volume': random.uniform(100, 1000),
                 'timestamp': int(time.time() * 1000),
                 'liquidity': random.uniform(10000, 100000),
-                'fee': 0.003  # 0.3% typical DEX fee
+                'fee': 0.003,  # 0.3% typical DEX fee
+                'pair': pair,  # Include pair info for provenance tracking
+                'source': f"dex:{protocol_info.get('name', 'unknown')}"
             }
 
         except Exception as e:
@@ -667,7 +686,9 @@ class DataEngine:
             'volume': random.uniform(50, 500),
             'timestamp': int(time.time() * 1000),
             'liquidity': random.uniform(5000, 50000),
-            'fee': 0.003
+            'fee': 0.003,
+            'pair': pair,  # Include pair info for provenance tracking
+            'source': 'dex:simulated'
         }
 
     def generate_fallback_ticker(self, pair: str) -> Dict:
@@ -715,7 +736,9 @@ class DataEngine:
             'ask': price + spread/2,
             'last': price,
             'volume': random.uniform(100, 1000),
-            'timestamp': int(time.time() * 1000)
+            'timestamp': int(time.time() * 1000),
+            'pair': pair,  # Include pair info for provenance tracking
+            'source': 'cex:fallback'
         }
 
     def _normalize_price_dict(self, price_dict: Optional[Dict]) -> Optional[Dict]:
@@ -862,12 +885,24 @@ class DataEngine:
         for exchange in self.cex_exchanges.keys():
             fallback_data['cex'][exchange] = {}
             for pair in trading_pairs:
-                fallback_data['cex'][exchange][pair] = self.generate_fallback_ticker(pair)
+                ticker = self.generate_fallback_ticker(pair)
+                base_token = pair.split('/')[0]
+                fallback_data['cex'][exchange][pair] = ticker
+                # Also map base token for consistent lookups
+                token_data = dict(ticker)
+                token_data['mapped_from_pair'] = pair
+                fallback_data['cex'][exchange][base_token] = token_data
  
         for protocol in self.dex_protocols.keys():
             fallback_data['dex'][protocol] = {}
             for pair in trading_pairs:
-                fallback_data['dex'][protocol][pair] = self.generate_simulated_dex_price(pair)
+                dex_price = self.generate_simulated_dex_price(pair)
+                base_token = pair.split('/')[0]
+                fallback_data['dex'][protocol][pair] = dex_price
+                # Also map base token for consistent lookups
+                token_data = dict(dex_price)
+                token_data['mapped_from_pair'] = pair
+                fallback_data['dex'][protocol][base_token] = token_data
  
         # Inject a synthetic exchange with manipulated prices to create a detectable profitable cycle
         # This is for testing only and should be removed or behind a config flag in production.
