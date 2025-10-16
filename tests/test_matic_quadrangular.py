@@ -50,15 +50,13 @@ async def test_matic_quadrangular_arbitrage_realistic_profit():
     The problem showed 11583% profit which is clearly wrong.
     Expected: Should show realistic profit (likely negative due to fees, or very small positive)
     
-    The rates from the problem statement:
-    - 10 MATIC → 998.77 USDT (rate: 99.977559 USDT/MATIC)
-    - 998.77 USDT → 5532.91 ALGO (rate: 5.545234 ALGO/USDT)
-    - 5532.91 ALGO → 995.15 USDC (rate: 0.180040 USDC/ALGO)
-    - 995.15 USDC → 1170.73 MATIC (rate: 1.177614 MATIC/USDC) ← WRONG!
+    The rates from the problem statement showed an issue with the last step.
+    This test uses REALISTIC prices for MATIC (~$100 in this test scenario, though 
+    real MATIC is ~$0.85) to demonstrate that with correct rate calculation,
+    the profit should be realistic, not 11583%.
     
-    The last rate is the problem. If MATIC ≈ $100, then:
-    - 995.15 USDC should buy about 995.15/100 = 9.95 MATIC, not 1170.73 MATIC
-    - Correct rate should be about 0.01 MATIC/USDC
+    Note: This test uses simulated prices where MATIC=$100 to match the problem statement,
+    but the important thing is that all pairs for the same token are CONSISTENT.
     """
     
     # Create price data with REALISTIC rates
@@ -125,12 +123,12 @@ async def test_matic_quadrangular_arbitrage_realistic_profit():
             },
             'USDC@coinbase->MATIC@coinbase': {
                 # CORRECTED RATE: Buy MATIC with USDC
-                # MATIC/USDC ask = 100.10, so 1 USDC buys 1/100.10 = 0.00999 MATIC
-                'rate': 1 / 100.10,  # Buy MATIC: 1 USDC = 0.00999 MATIC
+                # Use ask price from price_data for consistency
+                'rate': 1 / price_data['cex']['coinbase']['MATIC/USDC']['ask'],  # Buy MATIC
                 'fee': 0.001,
                 'pair': 'MATIC/USDC',
                 'action': 'buy',  # Buying MATIC with USDC
-                'weight': -math.log((1 / 100.10) * (1 - 0.001))
+                'weight': -math.log((1 / price_data['cex']['coinbase']['MATIC/USDC']['ask']) * (1 - 0.001))
             }
         }
     }
@@ -168,8 +166,8 @@ async def test_matic_cycle_with_wrong_rate_gets_validated():
     """
     Test that if we pass the WRONG rate (like in the problem), it gets detected.
     
-    This test uses the exact wrong rate from the problem statement (1.177614 MATIC/USDC)
-    to verify our validation catches it.
+    This test uses an intentionally wrong rate (1.177614 MATIC/USDC instead of ~0.00999)
+    to verify our validation handles it gracefully without crashing.
     """
     price_data = {
         'tokens': ['MATIC', 'USDC'],
@@ -190,7 +188,7 @@ async def test_matic_cycle_with_wrong_rate_gets_validated():
         'path': ['USDC@coinbase', 'MATIC@coinbase', 'USDC@coinbase'],
         'edge_data': {
             'USDC@coinbase->MATIC@coinbase': {
-                'rate': 1.177614,  # WRONG! Should be about 0.01
+                'rate': 1.177614,  # WRONG! Should be about 0.00999 (1/100.10)
                 'fee': 0.001,
                 'pair': 'MATIC/USDC',
                 'action': 'buy',

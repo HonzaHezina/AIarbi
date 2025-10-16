@@ -827,8 +827,9 @@ class DataEngine:
                 min_price = min(price_values)
                 max_price = max(price_values)
                 
-                # If prices differ by more than 5%, warn
-                if max_price > 0 and (max_price - min_price) / min_price > 0.05:
+                # If prices differ by more than threshold, warn
+                PRICE_CONSISTENCY_THRESHOLD = 0.05  # 5% max difference
+                if max_price > 0 and (max_price - min_price) / min_price > PRICE_CONSISTENCY_THRESHOLD:
                     warning = f"Price inconsistency detected for {token}: "
                     warning += f"ranges from ${min_price:.2f} to ${max_price:.2f} "
                     warning += f"({(max_price/min_price - 1)*100:.1f}% difference). "
