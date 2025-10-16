@@ -585,11 +585,13 @@ class DataEngine:
                         dex_data[protocol_name][base_token] = token_data
                         continue
                     else:
-                        # Preserve extra fields commonly present in DEX entries
+                        # Preserve extra fields commonly present in DEX entries (fee, liquidity)
+                        # Note: 'pair' and 'source' are handled separately below to ensure they're
+                        # always set correctly, even if missing or incorrect in source data
                         for extra in ('fee', 'liquidity'):
                             if isinstance(price_data, dict) and extra in price_data:
                                 normalized[extra] = price_data[extra]
-                        # Ensure pair and source are set (provenance tracking)
+                        # Ensure pair and source are always set for provenance tracking
                         if 'pair' not in normalized or not normalized['pair']:
                             normalized['pair'] = pair
                         if 'source' not in normalized or not normalized['source']:
