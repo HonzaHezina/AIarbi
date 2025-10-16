@@ -1,7 +1,6 @@
 import math
 import asyncio
 from typing import Dict, List, Any, Optional
-from datetime import datetime
 import logging
 from utils.config import get_exchange_fee
 
