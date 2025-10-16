@@ -1,8 +1,8 @@
 import math
 import asyncio
 from typing import Dict, List, Any, Optional
-from datetime import datetime
 import logging
+from utils.config import get_exchange_fee
 
 logger = logging.getLogger(__name__)
 
@@ -119,8 +119,8 @@ class CrossExchangeArbitrage:
                 return
 
             # Get fees and transfer costs
-            buy_fee = self.get_exchange_fee(from_exchange)
-            sell_fee = self.get_exchange_fee(to_exchange)
+            buy_fee = get_exchange_fee(from_exchange, 'taker')
+            sell_fee = get_exchange_fee(to_exchange, 'taker')
 
             transfer_info = await self.calculate_transfer_cost(token, from_exchange, to_exchange)
 
@@ -150,7 +150,7 @@ class CrossExchangeArbitrage:
                     return
 
                 # Adjust weight with AI confidence and volatility risk
-                volatility_risk = self.calculate_volatility_risk(token, transfer_info['time_minutes'])
+                volatility_risk = self.ai.calculate_volatility_risk(token, transfer_info['time_minutes'])
                 adjusted_rate = rate * (1 - volatility_risk) * ai_analysis['confidence']
 
                 weight = -math.log(adjusted_rate)
@@ -192,16 +192,7 @@ class CrossExchangeArbitrage:
 
         return None
 
-    def get_exchange_fee(self, exchange: str) -> float:
-        """Get trading fee for exchange"""
-        exchange_fees = {
-            'binance': 0.001,    # 0.1%
-            'kraken': 0.0026,    # 0.26%
-            'coinbase': 0.005,   # 0.5%
-            'kucoin': 0.001,     # 0.1%
-            'bitfinex': 0.002    # 0.2%
-        }
-        return exchange_fees.get(exchange.lower(), 0.002)  # Default 0.2%
+
 
     async def calculate_transfer_cost(self, token: str, from_exchange: str, to_exchange: str) -> Dict[str, Any]:
         """Calculate transfer cost and time between exchanges"""
@@ -237,27 +228,7 @@ class CrossExchangeArbitrage:
             'cost_usd': cost_usd
         }
 
-    def calculate_volatility_risk(self, token: str, transfer_time_minutes: int) -> float:
-        """Calculate volatility risk during transfer period"""
-
-        # Hourly volatility estimates
-        token_volatility = {
-            'BTC': 0.02,   # 2% per hour
-            'ETH': 0.025,  # 2.5% per hour
-            'BNB': 0.03,   # 3% per hour
-            'USDT': 0.001, # 0.1% per hour (stablecoin)
-            'USDC': 0.001  # 0.1% per hour (stablecoin)
-        }
-
-        hourly_vol = token_volatility.get(token, 0.035)  # Default 3.5% per hour
-        transfer_hours = transfer_time_minutes / 60
-
-        # Risk increases with time and volatility
-        volatility_risk = hourly_vol * transfer_hours * 0.5  # 50% of potential volatility as risk
-
-        return min(0.1, volatility_risk)  # Cap at 10%
-
-    async def ai_analyze_cross_exchange_opportunity(self, token: str, from_exchange: str, 
+    async def ai_analyze_cross_exchange_opportunity(self, token: str, from_exchange: str,
                                                    to_exchange: str, buy_price: float, 
                                                    sell_price: float, transfer_info: Dict) -> Dict[str, Any]:
         """AI analysis for cross-exchange opportunity"""
@@ -380,8 +351,8 @@ class CrossExchangeArbitrage:
                 return {'profitable': False, 'profit_pct': 0}
 
             # Calculate fees
-            buy_fee = self.get_exchange_fee(buy_exchange)
-            sell_fee = self.get_exchange_fee(sell_exchange)
+            buy_fee = get_exchange_fee(buy_exchange, 'taker')
+            sell_fee = get_exchange_fee(sell_exchange, 'taker')
 
             # Calculate transfer costs
             transfer_info = await self.calculate_transfer_cost(token, buy_exchange, sell_exchange)
