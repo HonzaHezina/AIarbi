@@ -189,6 +189,8 @@ class DEXCEXArbitrage:
                                          sell_exchange=dex_protocol,
                                          buy_price=cex_buy_price,
                                          sell_price=dex_sell_price,
+                                         fee=cex_fee + dex_fee,
+                                         estimated_slippage=0.0005,
                                          total_fees=cex_fee + dex_fee,
                                          gas_cost=gas_cost,
                                          ai_confidence=timing_analysis.get('confidence', 0.5))
@@ -313,6 +315,8 @@ class DEXCEXArbitrage:
                                          sell_exchange=cex_exchange,
                                          buy_price=dex_buy_price,
                                          sell_price=cex_sell_price,
+                                         fee=dex_fee + cex_fee,
+                                         estimated_slippage=0.0005,
                                          total_fees=dex_fee + cex_fee,
                                          gas_cost=gas_cost,
                                          ai_confidence=timing_analysis.get('confidence', 0.5))

@@ -99,6 +99,8 @@ class WrappedTokensArbitrage:
                                      operation='wrap',
                                      protocol=protocol_name,
                                      gas_cost_usd=wrap_cost['gas_cost_usd'],
+                                     fee=wrap_cost['fee_pct'],
+                                     estimated_slippage=0.0005,
                                      fee_pct=wrap_cost['fee_pct'])
                         edges_added += 1
 
@@ -113,6 +115,8 @@ class WrappedTokensArbitrage:
                                      operation='unwrap',
                                      protocol=protocol_name,
                                      gas_cost_usd=wrap_cost['gas_cost_usd'],
+                                     fee=wrap_cost['fee_pct'],
+                                     estimated_slippage=0.0005,
                                      fee_pct=wrap_cost['fee_pct'])
                         edges_added += 1
 
@@ -227,7 +231,9 @@ class WrappedTokensArbitrage:
                              from_exchange=from_loc['name'],
                              to_exchange=to_loc['name'],
                              transfer_cost=transfer_cost_total,
-                             transfer_time=transfer_cost['time_minutes'])
+                             transfer_time=transfer_cost['time_minutes'],
+                             fee=0.001,
+                             estimated_slippage=0.0005)
                 return 1
 
             return 0
@@ -339,7 +345,9 @@ class WrappedTokensArbitrage:
                              strategy='wrapped_tokens',
                              operation='native_to_wrapped',
                              wrap_cost=wrap_cost_total,
-                             transfer_cost=transfer_cost['cost_usd'])
+                             transfer_cost=transfer_cost['cost_usd'],
+                             fee=0.001,
+                             estimated_slippage=0.0005)
                 return 1
 
             return 0
@@ -394,7 +402,9 @@ class WrappedTokensArbitrage:
                              strategy='wrapped_tokens',
                              operation='wrapped_to_native',
                              unwrap_cost=unwrap_cost_total,
-                             transfer_cost=transfer_cost['cost_usd'])
+                             transfer_cost=transfer_cost['cost_usd'],
+                             fee=0.001,
+                             estimated_slippage=0.0005)
                 return 1
 
             return 0

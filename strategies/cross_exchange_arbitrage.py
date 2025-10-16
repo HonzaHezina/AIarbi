@@ -169,6 +169,8 @@ class CrossExchangeArbitrage:
                              transfer_time=transfer_info['time_minutes'],
                              volatility_risk=volatility_risk,
                              ai_confidence=ai_analysis['confidence'],
+                             fee=buy_fee + sell_fee,
+                             estimated_slippage=0.0005,
                              total_fees=buy_fee + sell_fee)
 
         except Exception as e:
