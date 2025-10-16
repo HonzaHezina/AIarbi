@@ -1428,8 +1428,13 @@ class ArbitrageDashboard:
                         total_fees = edge_info.get('fee', 0.001)
                     
                     fee_amount = current_token_amount * total_fees
-                    details += f"  💸 **Total Fees**: {total_fees * 100:.4f}% ({fee_amount:.8f} {from_token})\n"
-                    details += f"     📖 This includes all trading fees and slippage\n"
+                    details += f"  💸 **Trading Fees**: {total_fees * 100:.4f}% ({fee_amount:.8f} {from_token})\n"
+                    
+                    # Show slippage separately for transparency
+                    slippage = edge_info.get('estimated_slippage', 0.0005)
+                    slippage_amount = current_token_amount * slippage
+                    details += f"  📉 **Estimated Slippage**: {slippage * 100:.4f}% ({slippage_amount:.8f} {from_token})\n"
+                    details += f"     📖 Combined total impact: {(total_fees + slippage) * 100:.4f}%\n"
                     
                     gas_cost_usd = 0
                     if 'gas_cost' in edge_info and edge_info['gas_cost'] > 0:
@@ -1437,11 +1442,12 @@ class ArbitrageDashboard:
                         details += f"  ⛽ **Gas Cost**: ${gas_cost_usd:.2f}\n"
                         details += f"     📖 Blockchain transaction fee (DEX only)\n"
                     
-                    # Calculate amount after this step (CORRECT calculation)
+                    # Calculate amount after this step
                     # Apply conversion: from_token * rate = to_token
-                    # Then subtract fees
+                    # Then subtract fees AND slippage (must match calculate_cycle_profit logic)
                     # NOTE: Using potentially corrected rate from validation above
-                    next_token_amount = current_token_amount * rate * (1 - total_fees)
+                    slippage = edge_info.get('estimated_slippage', 0.0005)
+                    next_token_amount = current_token_amount * rate * (1 - total_fees - slippage)
                     
                     details += f"\n  ✅ **After this swap**: {next_token_amount:.8f} {to_token}\n"
                     

@@ -246,6 +246,8 @@ class TriangularArbitrage:
                 triangle_data['price1'], action1, exchange_type
             )
             if weight1 is not None:
+                # Calculate fee for this edge
+                fee1 = 0.003 if exchange_type == 'dex' else 0.001
                 graph.add_edge(node1, node2,
                              weight=weight1,
                              rate=rate1,
@@ -254,6 +256,8 @@ class TriangularArbitrage:
                              pair=pair1,
                              step=1,
                              action=action1,
+                             fee=fee1,
+                             estimated_slippage=0.0005,
                              triangle_id=f"{curr1_base}-{curr1_quote}-{curr2_quote}")
                 edges_added += 1
 
@@ -262,6 +266,8 @@ class TriangularArbitrage:
                 triangle_data['price2'], action2, exchange_type
             )
             if weight2 is not None:
+                # Calculate fee for this edge
+                fee2 = 0.003 if exchange_type == 'dex' else 0.001
                 graph.add_edge(node2, node3,
                              weight=weight2,
                              rate=rate2,
@@ -270,6 +276,8 @@ class TriangularArbitrage:
                              pair=pair2,
                              step=2,
                              action=action2,
+                             fee=fee2,
+                             estimated_slippage=0.0005,
                              triangle_id=f"{curr1_base}-{curr1_quote}-{curr2_quote}")
                 edges_added += 1
 
@@ -278,6 +286,8 @@ class TriangularArbitrage:
                 triangle_data['price3'], action3, exchange_type
             )
             if weight3 is not None:
+                # Calculate fee for this edge
+                fee3 = 0.003 if exchange_type == 'dex' else 0.001
                 graph.add_edge(node3, node1,
                              weight=weight3,
                              rate=rate3,
@@ -286,6 +296,8 @@ class TriangularArbitrage:
                              pair=pair3,
                              step=3,
                              action=action3,
+                             fee=fee3,
+                             estimated_slippage=0.0005,
                              triangle_id=f"{curr1_base}-{curr1_quote}-{curr2_quote}")
                 edges_added += 1
 
