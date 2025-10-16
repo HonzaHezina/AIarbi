@@ -1,6 +1,6 @@
 # Oprava Auto-refresh a Chyby Při Skenování
 
-**Datum**: 2025-10-16  
+**Datum**: 2024-10-16  
 **Verze**: 1.0  
 **Stav**: ✅ Opraveno a Otestováno
 
@@ -27,7 +27,7 @@ Aplikace vykazovala následující problémy:
 
 ### 1. Oprava Chyby se Slice Indices
 
-**Změny v `app.py` (řádky 574-600)**:
+**Změny v metodě `scan_arbitrage_opportunities` v `app.py`**:
 
 Přidána extrakce hodnot pro všechny parametry před jejich použitím:
 
@@ -49,7 +49,7 @@ max_opps = int(max_opps)
 
 ### 2. Nová Implementace Auto-Refresh
 
-**Změny v `app.py` (řádky 232-247 a 542-573)**:
+**Změny v metodě `create_interface` v `app.py`**:
 
 Nahrazení starého thread-based systému moderním Gradio Timer komponentem:
 
@@ -103,7 +103,7 @@ auto_refresh_timer.tick(
 
 ### 3. Odstranění Staré Implementace
 
-Odstraněna stará metoda `auto_refresh_scan` a thread-based kód (řádky 534-546, 889-891).
+Odstraněna stará metoda `auto_refresh_scan` a thread-based kód z metody `create_interface`.
 
 ---
 
