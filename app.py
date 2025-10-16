@@ -230,8 +230,17 @@ class ArbitrageDashboard:
                         )
 
                         auto_refresh = gr.Checkbox(
-                            label="Auto Refresh (30s)", 
-                            value=True
+                            label="Enable Auto Refresh", 
+                            value=False
+                        )
+                        
+                        refresh_interval = gr.Slider(
+                            minimum=30,
+                            maximum=300,
+                            value=60,
+                            step=30,
+                            label="Auto Refresh Interval (seconds)",
+                            info="How often to automatically scan for new opportunities"
                         )
 
                         demo_mode = gr.Checkbox(
@@ -530,20 +539,38 @@ class ArbitrageDashboard:
                 outputs=[opportunity_details_display]
             )
 
-            # Auto-refresh functionality
-            if auto_refresh:
-                import threading
-                def periodic_refresh():
-                    import asyncio
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    while True:
-                        loop.run_until_complete(self.auto_refresh_scan(
-                            enabled_strategies, trading_pairs, min_profit, max_opportunities, demo_mode
-                        ))
-                        time.sleep(30)  # Refresh every 30 seconds
-
-                threading.Thread(target=periodic_refresh, daemon=True).start()
+            # Auto-refresh functionality using Gradio's Timer
+            # The timer will be controlled by the auto_refresh checkbox
+            auto_refresh_timer = gr.Timer(value=60, active=False)
+            
+            def toggle_auto_refresh(enabled, interval):
+                """Toggle auto-refresh on/off and update interval"""
+                if enabled:
+                    return gr.Timer(value=interval, active=True)
+                else:
+                    return gr.Timer(active=False)
+            
+            # Connect auto-refresh checkbox and interval to timer
+            auto_refresh.change(
+                fn=toggle_auto_refresh,
+                inputs=[auto_refresh, refresh_interval],
+                outputs=[auto_refresh_timer]
+            )
+            
+            refresh_interval.change(
+                fn=toggle_auto_refresh,
+                inputs=[auto_refresh, refresh_interval],
+                outputs=[auto_refresh_timer]
+            )
+            
+            # When timer ticks, trigger a scan
+            auto_refresh_timer.tick(
+                fn=self.scan_arbitrage_opportunities,
+                inputs=[enabled_strategies, trading_pairs, min_profit, max_opportunities, demo_mode],
+                outputs=[opportunities_df, ai_analysis_text, performance_chart, 
+                        total_opportunities, avg_profit, ai_confidence, selected_opportunity, scan_progress_display,
+                        strategy_performance_chart, market_heatmap, risk_analysis]
+            )
 
         # Debugging: Log the size of the response being returned
         logger.debug(f"Debug: Returning response of size: {len(str(interface))} characters")
@@ -585,12 +612,22 @@ class ArbitrageDashboard:
                 strategies = strategies.value if strategies.value is not None else []
             if hasattr(pairs, 'value'):
                 pairs = pairs.value if pairs.value is not None else []
+            if hasattr(min_profit, 'value'):
+                min_profit = min_profit.value if min_profit.value is not None else 0.5
+            if hasattr(max_opps, 'value'):
+                max_opps = max_opps.value if max_opps.value is not None else 5
+            if hasattr(demo_mode, 'value'):
+                demo_mode = demo_mode.value if demo_mode.value is not None else True
             
             # Ensure we have lists
             if not isinstance(strategies, (list, tuple)):
                 strategies = []
             if not isinstance(pairs, (list, tuple)):
                 pairs = []
+            
+            # Ensure numeric values are proper types
+            min_profit = float(min_profit)
+            max_opps = int(max_opps)
             
             # Convert strategy names
             strategy_map = {
@@ -848,10 +885,6 @@ class ArbitrageDashboard:
         except Exception as e:
             error_analysis = f" Execution failed: {str(e)}"
             return self.execution_history, error_analysis
-
-    async def auto_refresh_scan(self, strategies, pairs, min_profit, max_opps, demo_mode):
-        """Auto-refresh function for live updates"""
-        return await self.scan_arbitrage_opportunities(strategies, pairs, min_profit, max_opps, demo_mode)
 
     async def generate_ai_market_analysis(self, opportunities, enabled_strategies=None):
         """Generate AI analysis of current market conditions with strategy insights"""
