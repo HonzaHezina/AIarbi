@@ -621,21 +621,34 @@ class DataEngine:
         """Generate simulated DEX price data for demo"""
         import random
 
-        # Base prices for simulation
+        # Base prices for simulation (keep consistent across pairs)
         base_prices = {
             'BTC/USDT': 50000,
-            'ETH/USDT': 3000, 
+            'BTC/USDC': 50000,
+            'ETH/USDT': 3000,
+            'ETH/USDC': 3000,
             'BNB/USDT': 300,
+            'BNB/USDC': 300,
             'ADA/USDT': 0.5,
+            'ADA/USDC': 0.5,
             'SOL/USDT': 100,
+            'SOL/USDC': 100,
             'ALGO/USDT': 0.18,
             'ALGO/USDC': 0.18,
             'WETH/USDC': 3000,
+            'WETH/USDT': 3000,
             'WBTC/USDC': 50000,
+            'WBTC/USDT': 50000,
             'LINK/USDC': 15.0,
+            'LINK/USDT': 15.0,
             'MATIC/USDC': 0.85,
+            'MATIC/USDT': 0.85,
             'CAKE/USDT': 3.5,
-            'DAI/USDC': 1.0
+            'CAKE/USDC': 3.5,
+            'DAI/USDC': 1.0,
+            'DAI/USDT': 1.0,
+            'USDT/USDC': 1.0,
+            'USDC/USDT': 1.0
         }
 
         base_price = base_prices.get(pair, 100)
@@ -661,20 +674,34 @@ class DataEngine:
         """Generate fallback ticker data for demo"""
         import random
 
+        # Base prices for fallback (keep consistent across pairs to avoid fake arbitrage)
         base_prices = {
             'BTC/USDT': 50000,
+            'BTC/USDC': 50000,
             'ETH/USDT': 3000,
-            'BNB/USDT': 300, 
+            'ETH/USDC': 3000,
+            'BNB/USDT': 300,
+            'BNB/USDC': 300,
             'ADA/USDT': 0.5,
+            'ADA/USDC': 0.5,
             'SOL/USDT': 100,
+            'SOL/USDC': 100,
             'ALGO/USDT': 0.18,
             'ALGO/USDC': 0.18,
             'WETH/USDC': 3000,
+            'WETH/USDT': 3000,
             'WBTC/USDC': 50000,
+            'WBTC/USDT': 50000,
             'LINK/USDC': 15.0,
+            'LINK/USDT': 15.0,
             'MATIC/USDC': 0.85,
+            'MATIC/USDT': 0.85,
             'CAKE/USDT': 3.5,
-            'DAI/USDC': 1.0
+            'CAKE/USDC': 3.5,
+            'DAI/USDC': 1.0,
+            'DAI/USDT': 1.0,
+            'USDT/USDC': 1.0,
+            'USDC/USDT': 1.0
         }
 
         base_price = base_prices.get(pair, 100)
@@ -752,6 +779,72 @@ class DataEngine:
                 tokens.add(base)
                 tokens.add(quote)
         return list(tokens)
+    
+    def validate_price_consistency(self, price_data: Dict[str, Any]) -> List[str]:
+        """
+        Validate that prices are consistent across different pairs.
+        Detects when the same token has wildly different implied USD prices.
+        
+        Returns list of warnings about inconsistencies.
+        """
+        warnings = []
+        
+        try:
+            # Extract all token prices relative to USD stablecoins
+            token_prices = {}  # token -> list of (price, pair, exchange) tuples
+            
+            for exchange_type in ['cex', 'dex']:
+                for exchange_name, exchange_data in price_data.get(exchange_type, {}).items():
+                    for pair, pair_data in exchange_data.items():
+                        if '/' not in pair or not isinstance(pair_data, dict):
+                            continue
+                        
+                        base, quote = pair.split('/')
+                        mid_price = (pair_data.get('bid', 0) + pair_data.get('ask', 0)) / 2
+                        
+                        if mid_price <= 0:
+                            continue
+                        
+                        # If quote is a stablecoin, this gives us base's USD price
+                        if quote in ['USDT', 'USDC', 'DAI', 'BUSD']:
+                            if base not in token_prices:
+                                token_prices[base] = []
+                            token_prices[base].append((mid_price, pair, exchange_name))
+                        
+                        # If base is a stablecoin, this gives us quote's USD price (inverted)
+                        if base in ['USDT', 'USDC', 'DAI', 'BUSD']:
+                            if quote not in token_prices:
+                                token_prices[quote] = []
+                            token_prices[quote].append((1/mid_price, pair, exchange_name))
+            
+            # Check for inconsistencies
+            for token, prices in token_prices.items():
+                if len(prices) < 2:
+                    continue
+                
+                # Calculate price range
+                price_values = [p[0] for p in prices]
+                min_price = min(price_values)
+                max_price = max(price_values)
+                
+                # If prices differ by more than threshold, warn
+                PRICE_CONSISTENCY_THRESHOLD = 0.05  # 5% max difference
+                if max_price > 0 and (max_price - min_price) / min_price > PRICE_CONSISTENCY_THRESHOLD:
+                    warning = f"Price inconsistency detected for {token}: "
+                    warning += f"ranges from ${min_price:.2f} to ${max_price:.2f} "
+                    warning += f"({(max_price/min_price - 1)*100:.1f}% difference). "
+                    warning += "This may create fake arbitrage opportunities!"
+                    warnings.append(warning)
+                    logger.warning(warning)
+                    
+                    # Log details for debugging
+                    for price, pair, exchange in prices:
+                        logger.debug(f"  {token} price from {pair}@{exchange}: ${price:.4f}")
+        
+        except Exception as e:
+            logger.exception(f"Error validating price consistency: {e}")
+        
+        return warnings
 
     def get_fallback_data(self, trading_pairs: List[str]) -> Dict[str, Any]:
         """Get fallback data when fetching fails"""

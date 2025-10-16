@@ -237,7 +237,7 @@ class GraphBuilder:
                                          fee=cex_fee,
                                          pair=pair,
                                          exchange=exchange_name,
-                                         trade_type='sell')
+                                         action='sell')
                         except (ValueError, OverflowError) as e:
                             logger.error(f"Error calculating weight for {pair}: {e}")
                             continue
@@ -276,7 +276,7 @@ class GraphBuilder:
                                          fee=cex_fee,
                                          pair=pair,
                                          exchange=exchange_name,
-                                         trade_type='buy')
+                                         action='buy')
                         except (ValueError, OverflowError) as e:
                             logger.error(f"Error calculating weight for {pair}: {e}")
                             continue
@@ -329,7 +329,7 @@ class GraphBuilder:
                                          fee=dex_fee,
                                          pair=pair,
                                          exchange=protocol_name,
-                                         trade_type='sell',
+                                         action='sell',
                                          liquidity=pair_data.get('liquidity', 0))
                         except (ValueError, OverflowError) as e:
                             logger.error(f"Error calculating DEX weight for {pair}: {e}")
@@ -368,7 +368,7 @@ class GraphBuilder:
                                          fee=dex_fee,
                                          pair=pair,
                                          exchange=protocol_name,
-                                         trade_type='buy',
+                                         action='buy',
                                          liquidity=pair_data.get('liquidity', 0))
                         except (ValueError, OverflowError) as e:
                             logger.error(f"Error calculating DEX weight for {pair}: {e}")
