@@ -518,7 +518,7 @@ class ArbitrageDashboard:
                 inputs=[enabled_strategies, trading_pairs, min_profit, max_opportunities, demo_mode],
                 outputs=[opportunities_df, ai_analysis_text, performance_chart, 
                         total_opportunities, avg_profit, ai_confidence, selected_opportunity, scan_progress_display,
-                        strategy_performance_chart, market_heatmap, risk_analysis]
+                        strategy_performance_chart, market_heatmap, risk_analysis, system_status_text]
             )
             
             # Refresh analytics
@@ -569,7 +569,7 @@ class ArbitrageDashboard:
                 inputs=[enabled_strategies, trading_pairs, min_profit, max_opportunities, demo_mode],
                 outputs=[opportunities_df, ai_analysis_text, performance_chart, 
                         total_opportunities, avg_profit, ai_confidence, selected_opportunity, scan_progress_display,
-                        strategy_performance_chart, market_heatmap, risk_analysis]
+                        strategy_performance_chart, market_heatmap, risk_analysis, system_status_text]
             )
 
         # Debugging: Log the size of the response being returned
@@ -785,6 +785,9 @@ class ArbitrageDashboard:
             # Store opportunities for analytics
             self.arbitrage_system.cached_opportunities = opportunities
 
+            # Get updated system status after scan
+            updated_status = self.get_system_status_display()
+
             return (
                 df_data,
                 ai_analysis, 
@@ -796,7 +799,8 @@ class ArbitrageDashboard:
                 self.scan_progress,
                 self.create_strategy_performance_chart(),
                 self.create_market_heatmap(),
-                self.generate_risk_analysis()
+                self.generate_risk_analysis(),
+                updated_status
             )
 
         except Exception as e:
@@ -807,7 +811,9 @@ class ArbitrageDashboard:
             error_msg += f"- Trading pairs\n"
             logger.error(f"Scan error: {str(e)}")
             error_progress = f"❌ Scan failed: {str(e)}"
-            return [], error_msg, go.Figure(), 0, 0, 0, gr.Dropdown(choices=[]), error_progress, go.Figure(), go.Figure(), "Error loading analytics"
+            # Get system status even on error to show current state
+            updated_status = self.get_system_status_display()
+            return [], error_msg, go.Figure(), 0, 0, 0, gr.Dropdown(choices=[]), error_progress, go.Figure(), go.Figure(), "Error loading analytics", updated_status
 
     async def execute_selected_opportunity(self, selected_opp, amount, demo_mode):
         """Execute selected arbitrage opportunity"""
