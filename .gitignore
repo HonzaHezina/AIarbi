@@ -13,3 +13,4 @@ venv/
 .env
 .vscode/
 .idea/
+test_monitoring_fix.py
