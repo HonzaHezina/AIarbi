@@ -518,7 +518,7 @@ class ArbitrageDashboard:
                 inputs=[enabled_strategies, trading_pairs, min_profit, max_opportunities, demo_mode],
                 outputs=[opportunities_df, ai_analysis_text, performance_chart, 
                         total_opportunities, avg_profit, ai_confidence, selected_opportunity, scan_progress_display,
-                        strategy_performance_chart, market_heatmap, risk_analysis]
+                        strategy_performance_chart, market_heatmap, risk_analysis, system_status_text]
             )
             
             # Refresh analytics
@@ -542,6 +542,10 @@ class ArbitrageDashboard:
             # Auto-refresh functionality using Gradio's Timer
             # The timer will be controlled by the auto_refresh checkbox
             auto_refresh_timer = gr.Timer(value=60, active=False)
+            
+            # Status monitoring timer - always active for real-time status updates
+            # Updates every 10 seconds to keep system status current
+            status_refresh_timer = gr.Timer(value=10, active=True)
             
             def toggle_auto_refresh(enabled, interval):
                 """Toggle auto-refresh on/off and update interval"""
@@ -569,7 +573,13 @@ class ArbitrageDashboard:
                 inputs=[enabled_strategies, trading_pairs, min_profit, max_opportunities, demo_mode],
                 outputs=[opportunities_df, ai_analysis_text, performance_chart, 
                         total_opportunities, avg_profit, ai_confidence, selected_opportunity, scan_progress_display,
-                        strategy_performance_chart, market_heatmap, risk_analysis]
+                        strategy_performance_chart, market_heatmap, risk_analysis, system_status_text]
+            )
+            
+            # Status monitoring timer tick - updates system status display
+            status_refresh_timer.tick(
+                fn=self.get_system_status_display,
+                outputs=[system_status_text]
             )
 
         # Debugging: Log the size of the response being returned
@@ -785,6 +795,9 @@ class ArbitrageDashboard:
             # Store opportunities for analytics
             self.arbitrage_system.cached_opportunities = opportunities
 
+            # Get updated system status after scan
+            updated_status = self.get_system_status_display()
+
             return (
                 df_data,
                 ai_analysis, 
@@ -796,7 +809,8 @@ class ArbitrageDashboard:
                 self.scan_progress,
                 self.create_strategy_performance_chart(),
                 self.create_market_heatmap(),
-                self.generate_risk_analysis()
+                self.generate_risk_analysis(),
+                updated_status
             )
 
         except Exception as e:
@@ -807,7 +821,9 @@ class ArbitrageDashboard:
             error_msg += f"- Trading pairs\n"
             logger.error(f"Scan error: {str(e)}")
             error_progress = f"❌ Scan failed: {str(e)}"
-            return [], error_msg, go.Figure(), 0, 0, 0, gr.Dropdown(choices=[]), error_progress, go.Figure(), go.Figure(), "Error loading analytics"
+            # Get system status even on error to show current state
+            updated_status = self.get_system_status_display()
+            return [], error_msg, go.Figure(), 0, 0, 0, gr.Dropdown(choices=[]), error_progress, go.Figure(), go.Figure(), "Error loading analytics", updated_status
 
     async def execute_selected_opportunity(self, selected_opp, amount, demo_mode):
         """Execute selected arbitrage opportunity"""
@@ -1099,16 +1115,23 @@ class ArbitrageDashboard:
             # Data Engine
             diag += f"\n📡 Data Engine: ✓ Active\n"
             
-            # Cache
+            # Cache and scan status
             cached = status.get('cached_opportunities', 0)
-            diag += f"\n=== CACHE STATUS ===\n"
+            diag += f"\n=== CACHE & SCAN STATUS ===\n"
             diag += f"💾 Cached Opportunities: {cached}\n"
             
             last_scan = status.get('last_scan')
             if last_scan:
-                diag += f"Last Scan: {last_scan.strftime('%Y-%m-%d %H:%M:%S')}\n"
+                time_diff = (datetime.now() - last_scan).seconds
+                if time_diff < 60:
+                    time_str = f"{time_diff}s ago"
+                elif time_diff < 3600:
+                    time_str = f"{time_diff // 60}m ago"
+                else:
+                    time_str = f"{time_diff // 3600}h ago"
+                diag += f"⏱️ Last Scan: {time_str} ({last_scan.strftime('%H:%M:%S')})\n"
             else:
-                diag += f"Last Scan: Never\n"
+                diag += f"⏱️ Last Scan: Never (No scans performed yet)\n"
             
             return diag
             
@@ -1156,15 +1179,23 @@ class ArbitrageDashboard:
             else:
                 diag += f"⚠️ Simulated (safe demo mode)\n"
             
-            # Cache
+            # Cache and fetch status
             cached_data = data_status.get('cached_data_available', False)
-            diag += f"\n💾 Cached Data: {'✓ Available' if cached_data else '✗ None yet'}\n"
+            diag += f"\n=== CACHE STATUS ===\n"
+            diag += f"💾 Cached Data: {'✓ Available' if cached_data else '✗ None yet'}\n"
             
             last_fetch = data_status.get('last_fetch')
             if last_fetch:
-                diag += f"Last Fetch: {last_fetch.strftime('%H:%M:%S')}\n"
+                time_diff = (datetime.now() - last_fetch).seconds
+                if time_diff < 60:
+                    time_str = f"{time_diff}s ago"
+                elif time_diff < 3600:
+                    time_str = f"{time_diff // 60}m ago"
+                else:
+                    time_str = f"{time_diff // 3600}h ago"
+                diag += f"⏱️ Last Fetch: {time_str} ({last_fetch.strftime('%H:%M:%S')})\n"
             else:
-                diag += f"Last Fetch: Never\n"
+                diag += f"⏱️ Last Fetch: Never (No data fetched yet)\n"
             
             return diag
             
