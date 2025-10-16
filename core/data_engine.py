@@ -577,29 +577,39 @@ class DataEngine:
                     normalized = self._normalize_price_dict(price_data)
                     if not normalized:
                         logger.warning(f"Invalid DEX price for {pair} on {protocol_name}; using simulated fallback")
-                        fallback = self.generate_simulated_dex_price(pair)
-                        dex_data[protocol_name][pair] = fallback
+                        dex_data[protocol_name][pair] = self.generate_simulated_dex_price(pair)
+                        # Add individual token data (same as success path)
+                        base_token = pair.split('/')[0]
+                        token_data = dict(dex_data[protocol_name][pair])
+                        token_data['mapped_from_pair'] = pair
+                        dex_data[protocol_name][base_token] = token_data
+                        continue
                     else:
                         # Preserve extra fields commonly present in DEX entries
-                        for extra in ('fee', 'liquidity', 'pair', 'source'):
+                        for extra in ('fee', 'liquidity'):
                             if isinstance(price_data, dict) and extra in price_data:
                                 normalized[extra] = price_data[extra]
-                        # Ensure pair and source are set
+                        # Ensure pair and source are set (provenance tracking)
                         if 'pair' not in normalized or not normalized['pair']:
                             normalized['pair'] = pair
                         if 'source' not in normalized or not normalized['source']:
                             normalized['source'] = f"dex:{protocol_name}"
                         dex_data[protocol_name][pair] = normalized
-    
-                    # Add individual token data
-                    base_token = pair.split('/')[0]
-                    token_data = dict(dex_data[protocol_name][pair])
-                    token_data['mapped_from_pair'] = pair
-                    dex_data[protocol_name][base_token] = token_data
+                        
+                        # Add individual token data
+                        base_token = pair.split('/')[0]
+                        token_data = dict(dex_data[protocol_name][pair])
+                        token_data['mapped_from_pair'] = pair
+                        dex_data[protocol_name][base_token] = token_data
 
                 except Exception as e:
                     logger.exception(f"Failed to fetch {pair} from {protocol_name}: {str(e)}")
                     dex_data[protocol_name][pair] = self.generate_simulated_dex_price(pair)
+                    # Add individual token data (same as success path)
+                    base_token = pair.split('/')[0]
+                    token_data = dict(dex_data[protocol_name][pair])
+                    token_data['mapped_from_pair'] = pair
+                    dex_data[protocol_name][base_token] = token_data
 
                 await asyncio.sleep(0.1)
 
