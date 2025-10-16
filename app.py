@@ -1310,33 +1310,44 @@ class ArbitrageDashboard:
                     original_rate = rate  # Store original for logging
                     rate_was_corrected = False
                     
-                    # Validate and potentially correct the rate based on pair orientation
-                    if pair_used and '/' in pair_used:
+                    # Validate rate based on pair orientation and action
+                    if pair_used and '/' in pair_used and action:
                         pair_base, pair_quote = pair_used.split('/')
                         expected_pair = f"{from_token}/{to_token}"
                         inverted_pair = f"{to_token}/{from_token}"
                         
-                        # If the pair is inverted and action doesn't match, rate might be wrong
-                        if pair_used == inverted_pair:
-                            # Pair is inverted (to_token/from_token instead of from_token/to_token)
-                            # Action should be 'buy' to invert it, but let's validate
-                            if action == 'sell':
-                                # This is problematic: selling to_token when we want from_token→to_token
-                                # The rate is likely wrong - it's quote_per_base when we need base_per_quote
-                                logger.warning(f"Rate inversion issue detected: pair={pair_used}, action={action} "
-                                             f"for conversion {from_token}→{to_token}. Attempting to fix.")
-                                rate = 1 / rate if rate > 0 else rate
-                                rate_was_corrected = True
+                        # Check if pair and action are consistent with the conversion direction
+                        if pair_used == expected_pair:
+                            # Direct pair (from/to) - should use action='sell'
+                            if action != 'sell':
+                                logger.warning(f"Inconsistent action for direct pair {pair_used}: "
+                                             f"action={action} for {from_token}→{to_token}. Expected 'sell'.")
+                                details += f"  ⚠️ **DATA ISSUE**: Pair {pair_used} with action={action} is inconsistent!\n"
+                        elif pair_used == inverted_pair:
+                            # Inverted pair (to/from) - should use action='buy'
+                            if action != 'buy':
+                                logger.warning(f"Inconsistent action for inverted pair {pair_used}: "
+                                             f"action={action} for {from_token}→{to_token}. Expected 'buy'.")
+                                details += f"  ⚠️ **DATA ISSUE**: Pair {pair_used} with action={action} is inconsistent!\n"
+                        else:
+                            logger.warning(f"Pair {pair_used} doesn't match conversion {from_token}→{to_token}")
+                            details += f"  ⚠️ **DATA ISSUE**: Pair {pair_used} doesn't match conversion!\n"
                     
-                    # Validate rate for obvious errors (after potential correction)
-                    if rate > 1000 or rate < 0.001:
-                        # Suspicious rate - might indicate inverted pair or wrong calculation
-                        logger.warning(f"Suspicious conversion rate: {rate:.6f} {to_token}/{from_token}. "
-                                     f"Edge: {edge_key}, Pair: {pair_used}, Action: {action}, Original: {original_rate:.6f}")
-                        details += f"  ⚠️ **WARNING**: Suspicious conversion rate detected!\n"
-                        details += f"     Pair used: {pair_used}, Action: {action}\n"
-                        if rate_was_corrected:
-                            details += f"     Original rate: {original_rate:.6f}, Corrected to: {rate:.6f}\n"
+                    # Validate rate for obvious errors
+                    if rate > 1e6:
+                        logger.warning(f"Extremely high rate {rate:.2e} for {from_token}→{to_token}. "
+                                     f"Pair: {pair_used}, Action: {action}")
+                        details += f"  ⚠️ **WARNING**: Extremely high conversion rate {rate:.2e}!\n"
+                        details += f"     This suggests incorrect price data. Capping display at 1e6.\n"
+                        rate = 1e6
+                        rate_was_corrected = True
+                    elif rate < 1e-6:
+                        logger.warning(f"Extremely low rate {rate:.2e} for {from_token}→{to_token}. "
+                                     f"Pair: {pair_used}, Action: {action}")
+                        details += f"  ⚠️ **WARNING**: Extremely low conversion rate {rate:.2e}!\n"
+                        details += f"     This suggests incorrect price data. Flooring display at 1e-6.\n"
+                        rate = 1e-6
+                        rate_was_corrected = True
                     
                     details += f"  📈 **Conversion Rate**: {rate:.6f} {to_token}/{from_token}\n"
                     details += f"     📖 For every 1 {from_token}, you get {rate:.6f} {to_token}\n"

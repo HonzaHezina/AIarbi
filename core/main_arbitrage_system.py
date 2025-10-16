@@ -268,27 +268,47 @@ class MainArbitrageSystem:
                 fee_pct = edge_data.get('fee', 0.001)
                 slippage = edge_data.get('estimated_slippage', 0.0005)
                 
-                # Validate and potentially correct conversion rate
-                # Check if rate matches the pair orientation
+                # Validate conversion rate based on pair orientation and action
                 pair_used = edge_data.get('pair', None)
                 action = edge_data.get('action', None)
-                if pair_used and '/' in pair_used:
+                
+                # Validate the rate makes sense for the conversion
+                if pair_used and '/' in pair_used and action:
                     pair_base, pair_quote = pair_used.split('/')
                     expected_pair = f"{current_token}/{next_token}"
                     inverted_pair = f"{next_token}/{current_token}"
                     
-                    # Detect problematic rate inversions
-                    if pair_used == inverted_pair and action == 'sell':
-                        # Pair is inverted but action is 'sell' - this is problematic!
-                        # The rate represents quote_per_base but we need base_per_quote
-                        logger.warning(f"Rate inversion detected in profit calculation: "
-                                     f"pair={pair_used}, action={action} for {current_token}→{next_token}. "
-                                     f"Original rate: {conversion_rate:.8f}, inverting...")
-                        if conversion_rate > 0:
-                            conversion_rate = 1 / conversion_rate
-                        else:
-                            logger.error(f"Cannot invert zero rate! Setting to 1.0")
-                            conversion_rate = 1.0
+                    # Check if the pair orientation matches the conversion direction
+                    # Expected: if converting A→B, pair should be A/B with action='sell' OR B/A with action='buy'
+                    if pair_used == expected_pair:
+                        # Pair matches conversion direction (A/B for A→B)
+                        if action != 'sell':
+                            logger.warning(f"Inconsistent action for direct pair: "
+                                         f"pair={pair_used}, action={action} for {current_token}→{next_token}. "
+                                         f"Expected action='sell'. Rate might be wrong.")
+                    elif pair_used == inverted_pair:
+                        # Pair is inverted (B/A for A→B conversion)
+                        if action != 'buy':
+                            logger.warning(f"Inconsistent action for inverted pair: "
+                                         f"pair={pair_used}, action={action} for {current_token}→{next_token}. "
+                                         f"Expected action='buy'. Rate might be wrong.")
+                    else:
+                        logger.warning(f"Pair {pair_used} doesn't match conversion {current_token}→{next_token}. "
+                                     f"This suggests a data error in the cycle.")
+                
+                # Validate rate is reasonable (not obviously wrong)
+                if conversion_rate <= 0:
+                    logger.error(f"Invalid conversion rate {conversion_rate} for {current_token}→{next_token}. "
+                               f"Setting to 1.0 to avoid crash.")
+                    conversion_rate = 1.0
+                elif conversion_rate > 1e6:
+                    logger.error(f"Extremely high conversion rate {conversion_rate:.2e} for {current_token}→{next_token}. "
+                               f"This suggests incorrect data. Capping at 1e6.")
+                    conversion_rate = 1e6
+                elif conversion_rate < 1e-6:
+                    logger.error(f"Extremely low conversion rate {conversion_rate:.2e} for {current_token}→{next_token}. "
+                               f"This suggests incorrect data. Flooring at 1e-6.")
+                    conversion_rate = 1e-6
                 
                 logger.debug(f"Step {i+1}: {current_token} -> {next_token}")
                 logger.debug(f"  Amount before: {current_token_amount:.8f} {current_token}")
