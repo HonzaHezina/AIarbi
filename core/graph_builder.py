@@ -95,10 +95,8 @@ except Exception:
 
 logger = logging.getLogger(__name__)
 
-# Validation thresholds for rate and weight validation
-MAX_RATE_THRESHOLD = 1e6  # Maximum allowed rate (rates above this are considered invalid)
-MIN_RATE_THRESHOLD = 1e-6  # Minimum allowed rate (rates below this are considered invalid)
-MAX_WEIGHT_THRESHOLD = 10  # Maximum allowed absolute weight value
+# Import centralized validation thresholds
+from utils.constants import MAX_RATE_THRESHOLD, MIN_RATE_THRESHOLD, MAX_WEIGHT_THRESHOLD
 
 class GraphBuilder:
     """

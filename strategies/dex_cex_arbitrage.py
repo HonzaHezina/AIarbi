@@ -3,6 +3,7 @@ import asyncio
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 import logging
+from utils.constants import EPS
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +118,6 @@ class DEXCEXArbitrage:
                     sell_proceeds = dex_sell_price * (1 - dex_fee) - gas_cost
 
                     # Sanity checks to avoid spurious extreme rates from malformed data
-                    EPS = 1e-8
                     if buy_cost <= EPS or sell_proceeds <= EPS:
                         logger.warning(
                             "Skipping cex->dex candidate due to near-zero cost/proceeds token=%s buy=%s sell=%s buy_cost=%s sell_proceeds=%s source_cex_pair=%s source_dex_pair=%s",
@@ -243,7 +243,6 @@ class DEXCEXArbitrage:
                     sell_proceeds = cex_sell_price * (1 - cex_fee)
 
                     # Sanity checks to avoid spurious extreme rates from malformed data
-                    EPS = 1e-8
                     if buy_cost <= EPS or sell_proceeds <= EPS:
                         logger.warning(
                             "Skipping dex->cex candidate due to near-zero cost/proceeds token=%s buy=%s sell=%s buy_cost=%s sell_proceeds=%s source_dex_pair=%s source_cex_pair=%s",
